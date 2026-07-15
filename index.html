@@ -1,3 +1,4 @@
+<!doctype html>
 <!--
   VHS Tracer — a pen-first tracing surface, spin-off of the GlyphCollector.
 
@@ -14,8 +15,8 @@
   (File System Access API) to write straight into it.
 
   Save as JSON (lossless: artboard + layers + raw {x,y,p,t} points +
-  settings, and optionally the reference image embedded as a data-URL, so
-  the file is a portable, self-contained project that reopens exactly) or
+  drawing settings, and optionally the reference image embedded as a data-URL,
+  so the file is a portable, self-contained project) or
   export to SVG (processed paths per layer <g>, pressure as variable width).
 
   Tablet gestures: the PEN draws; one finger PANS; two fingers PINCH-ZOOM.
@@ -23,7 +24,7 @@
 -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>VHS Tracer</title>
+<title>Tracer</title>
 <style>
   :root {
     --bg: #1e232b; --panel: #2a303a; --panel2: #333b47;
@@ -254,8 +255,25 @@ const LAYER_PALETTE = ['#111111', '#ef4444', '#2563eb', '#16a34a',
                        '#d97706', '#7c3aed', '#db2777', '#0891b2'];
 
 // Settings (mirrored from the toolbar)
+const STABILIZER_MAX = 0.85;
+const MAX_ARTBOARD_SIZE = 100000;
 const cfg = { imgOpacity: 0.45, penColor: '#111111', penWidth: 4,
-              stab: 0.35, smooth: true, varw: true, embedImage: true };
+              stab: 0.35 * STABILIZER_MAX, smooth: true, varw: true,
+              embedImage: true };
+
+function clampNumber(value, fallback, min, max) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+}
+function safeColor(value, fallback = '#111111') {
+  const color = String(value || '').trim();
+  return /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : fallback;
+}
+function safeName(value, fallback) {
+  const name = String(value == null ? '' : value).trim();
+  const result = name || fallback;
+  return result == null ? null : String(result).slice(0, 200);
+}
 
 function newLayer(color) {
   layerSeq++;
@@ -489,7 +507,8 @@ board.addEventListener('pointermove', (e) => {
     touches.set(e.pointerId, ptOf(e)); updateGesture(); return;
   }
   if (!current) return;
-  if (e.getCoalescedEvents) e.getCoalescedEvents().forEach(addPoint);
+  const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+  if (coalesced && coalesced.length) coalesced.forEach(addPoint);
   else addPoint(e);
   render(); updateHud();
 });
@@ -657,10 +676,10 @@ function buildImageMeta() {
 }
 function buildJSON() {
   return JSON.stringify({
-    type: 'vhs-trace', version: 2,
+    type: 'vhs-trace', version: 3,
     artboard: { width: AW, height: AH },
     image: buildImageMeta(),
-    settings: { stabilizer: cfg.stab, smooth: cfg.smooth,
+    settings: { stabilizer: round(cfg.stab / STABILIZER_MAX, 4), smooth: cfg.smooth,
                 variable_width: cfg.varw },
     layers: layers.map(l => ({
       name: l.name, color: l.color, visible: l.visible, opacity: l.opacity,
@@ -680,18 +699,20 @@ function escapeAttr(s) {
 // One stroke → one SVG element string (pressure baked in when varw is on).
 function svgStroke(st) {
   const pts = processStroke(st);
+  const color = safeColor(st.color);
+  const width = clampNumber(st.width, 4, 0.1, 1000);
   if (pts.length === 0) return '';
   if (pts.length === 1)
     return `<circle cx="${round(pts[0].x)}" cy="${round(pts[0].y)}" ` +
-           `r="${round(halfWidth(st.width, pts[0].p))}" fill="${st.color}"/>`;
+           `r="${round(halfWidth(width, pts[0].p))}" fill="${color}"/>`;
   if (cfg.varw) {
-    const poly = outlinePoints(pts, st.width);
+    const poly = outlinePoints(pts, width);
     const d = 'M ' + poly.map(q => `${round(q.x)} ${round(q.y)}`).join(' L ') + ' Z';
-    return `<path d="${d}" fill="${st.color}"/>`;
+    return `<path d="${d}" fill="${color}"/>`;
   }
   const d = 'M ' + pts.map(q => `${round(q.x)} ${round(q.y)}`).join(' L ');
-  return `<path d="${d}" fill="none" stroke="${st.color}" ` +
-    `stroke-width="${st.width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return `<path d="${d}" fill="none" stroke="${color}" ` +
+    `stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 
 function buildSVG() {
@@ -702,7 +723,8 @@ function buildSVG() {
   // Each visible layer → a <g>, so the layer structure survives into SVG.
   for (const layer of layers) {
     if (!layer.visible || layer.strokes.length === 0) continue;
-    const op = layer.opacity < 0.999 ? ` opacity="${round(layer.opacity, 3)}"` : '';
+    const opacity = clampNumber(layer.opacity, 1, 0, 1);
+    const op = opacity < 0.999 ? ` opacity="${round(opacity, 3)}"` : '';
     parts.push(`  <g${op} data-layer="${escapeAttr(layer.name)}">`);
     for (const st of layer.strokes) {
       const seg = svgStroke(st);
@@ -716,26 +738,44 @@ function buildSVG() {
 
 function loadTraceJSON(obj) {
   if (!obj || obj.type !== 'vhs-trace') { alert('Not a VHS trace file.'); return; }
-  if (obj.artboard) { AW = obj.artboard.width; AH = obj.artboard.height; }
+  if (obj.artboard) {
+    AW = clampNumber(obj.artboard.width, AW, 1, MAX_ARTBOARD_SIZE);
+    AH = clampNumber(obj.artboard.height, AH, 1, MAX_ARTBOARD_SIZE);
+  }
   // Restore an embedded reference image, if the project carried one.
   if (obj.image && obj.image.data) {
-    loadImageFromSrc(obj.image.data, obj.image.name || null);
+    if (/^data:image\/[a-z0-9.+-]+(?:;[^,]*)?,/i.test(obj.image.data)) {
+      loadImageFromSrc(obj.image.data, safeName(obj.image.name, null));
+    } else {
+      bgImage = null; bgName = safeName(obj.image.name, null);
+    }
   } else {
-    bgImage = null; bgName = (obj.image && obj.image.name) || null;
+    bgImage = null;
+    bgName = obj.image ? safeName(obj.image.name, null) : null;
   }
-  const mkStroke = s => ({
-    color: s.color || '#111111', width: s.width || 4,
-    points: (s.points || []).map(p => ({ x: p.x, y: p.y,
-                                         p: p.p != null ? p.p : 0.5, t: p.t || 0 }))
-  });
+  const mkStroke = s => {
+    const sourcePoints = Array.isArray(s && s.points) ? s.points : [];
+    return {
+      color: safeColor(s && s.color),
+      width: clampNumber(s && s.width, 4, 0.1, 1000),
+      points: sourcePoints.flatMap(p => {
+        if (!p || typeof p !== 'object') return [];
+        const x = Number(p && p.x), y = Number(p && p.y);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return [];
+        return [{ x, y,
+          p: clampNumber(p && p.p, 0.5, 0, 1),
+          t: clampNumber(p && p.t, 0, 0, Number.MAX_SAFE_INTEGER) }];
+      })
+    };
+  };
   layerSeq = 0; layers = [];
-  if (Array.isArray(obj.layers)) {                 // v2
+  if (Array.isArray(obj.layers)) {                 // v2+
     obj.layers.forEach(l => {
-      const lay = newLayer(l.color || '#111111');
-      lay.name = l.name || lay.name;
-      lay.visible = l.visible !== false;
-      lay.opacity = (l.opacity != null) ? l.opacity : 1;
-      lay.strokes = (l.strokes || []).map(mkStroke);
+      const lay = newLayer(safeColor(l && l.color));
+      lay.name = safeName(l && l.name, lay.name);
+      lay.visible = !l || l.visible !== false;
+      lay.opacity = clampNumber(l && l.opacity, 1, 0, 1);
+      lay.strokes = (Array.isArray(l && l.strokes) ? l.strokes : []).map(mkStroke);
       layers.push(lay);
     });
   } else if (Array.isArray(obj.strokes)) {         // v1 back-compat → single layer
@@ -747,9 +787,12 @@ function loadTraceJSON(obj) {
   activeId = layers[layers.length - 1].id;
   undoStack = []; redoStack = [];
   if (obj.settings) {
-    if (obj.settings.stabilizer != null) setStab(obj.settings.stabilizer);
-    if (obj.settings.smooth != null) { cfg.smooth = obj.settings.smooth; document.getElementById('smooth').checked = cfg.smooth; }
-    if (obj.settings.variable_width != null) { cfg.varw = obj.settings.variable_width; document.getElementById('varw').checked = cfg.varw; }
+    if (obj.settings.stabilizer != null) {
+      if (Number(obj.version) >= 3) setStab(obj.settings.stabilizer);
+      else setStabilizerStrength(obj.settings.stabilizer); // v2 stored internal EMA strength
+    }
+    if (typeof obj.settings.smooth === 'boolean') { cfg.smooth = obj.settings.smooth; document.getElementById('smooth').checked = cfg.smooth; }
+    if (typeof obj.settings.variable_width === 'boolean') { cfg.varw = obj.settings.variable_width; document.getElementById('varw').checked = cfg.varw; }
   }
   syncPenColor(); renderLayerPanel();
   document.getElementById('hint').style.display = 'none';
@@ -772,15 +815,20 @@ function bindRange(id, apply, fmt) {
 bindRange('imgOpacity', v => { cfg.imgOpacity = v / 100; render(); }, v => v + '%');
 bindRange('penWidth', v => { cfg.penWidth = v; }, v => v);
 function setStab(v) {
+  const raw = clampNumber(v, 0.35, 0, 1);
   const el = document.getElementById('stab');
-  el.value = Math.round(v * 100);
-  cfg.stab = v * 0.85;               // slider 0..100 → strength 0..0.85
-  document.getElementById('stabV').textContent = Math.round(v * 100);
+  el.value = Math.round(raw * 100);
+  cfg.stab = raw * STABILIZER_MAX;    // slider 0..100 → strength 0..0.85
+  document.getElementById('stabV').textContent = Math.round(raw * 100);
   render();
+}
+function setStabilizerStrength(v) {
+  const strength = clampNumber(v, 0.35 * STABILIZER_MAX, 0, STABILIZER_MAX);
+  setStab(strength / STABILIZER_MAX);
 }
 document.getElementById('stab').addEventListener('input', (e) => {
   const raw = parseFloat(e.target.value) / 100;
-  cfg.stab = raw * 0.85;
+  cfg.stab = raw * STABILIZER_MAX;
   document.getElementById('stabV').textContent = Math.round(raw * 100);
   render();
 });
