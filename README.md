@@ -13,7 +13,7 @@ A pen-first tracing surface for stylus-enabled devices. Load a reference image, 
 - **Catmull-Rom curves** — optional spline interpolation for flowing, organic strokes. Also non-destructive.
 - **Multiple layers** — each layer has its own colour, visibility toggle, and opacity slider. Drag the grip handle to restack layers. Rename layers by double-clicking.
 - **Undo / redo** — full stroke-level history across all layers (`Ctrl/Cmd+Z` / `Ctrl/Cmd+Shift+Z`).
-- **Portable JSON projects** — save as `.json` (lossless: artboard size, all layers, raw `{x, y, pressure, t}` points, settings). Optionally embeds the reference image as a data URL so the file reopens exactly as left.
+- **Portable JSON projects** — save as `.json` (lossless: artboard size, all layers, raw `{x, y, pressure, t}` points, and drawing-processing settings). Optionally embeds the reference image as a data URL. View state and UI-only preferences reset when reopened.
 - **SVG export** — export processed paths per layer as `<g>` groups, with pressure baked into variable-width outlines.
 - **Folder connect** — connect a local folder via the File System Access API (Chromium) to write files straight into it instead of downloading.
 - **Zero setup** — single HTML file, works entirely offline, opens directly from disk.
@@ -38,6 +38,15 @@ xdg-open index.html      # Linux
 The live version is deployed automatically on every push to `main`:
 
 **https://utrost.github.io/Tracer/**
+
+### Regression checks
+
+The distributable remains the single `index.html` file. The dependency-free
+core regression checks can be run separately with:
+
+```sh
+node tests/tracer-core.test.cjs
+```
 
 ---
 
@@ -100,7 +109,7 @@ Lossless project format. Stores artboard dimensions, all layer metadata, and raw
 ```jsonc
 {
   "type": "vhs-trace",
-  "version": 2,
+  "version": 3,
   "artboard": { "width": 2480, "height": 3508 },
   "image": { "name": "reference.png", "data": "data:image/png;base64,…" },
   "layers": [
