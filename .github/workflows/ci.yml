@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run Tracer regression tests
+        run: node tests/tracer-core.test.cjs
+      - name: Verify static deployment artifact
+        run: |
+          mkdir -p _site
+          cp index.html _site/index.html
+          cp manifest.webmanifest _site/
+          cp sw.js _site/
+          cp -R icons _site/
+          test -f _site/index.html
+          test -f _site/manifest.webmanifest
+          test -f _site/sw.js
+          test -f _site/icons/icon-192.svg
+          test -f _site/icons/icon-512.svg
