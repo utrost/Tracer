@@ -3,6 +3,42 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(new URL('../index.html', `file://${__filename}`), 'utf8');
+
+assert.match(html, /<link\s+rel="manifest"\s+href="\.\/manifest\.webmanifest"/,
+  'index should expose a web app manifest for PWA installation');
+assert.match(html, /<meta\s+name="theme-color"\s+content="#1e232b"/,
+  'index should set a theme color for browser/PWA chrome');
+assert.match(html, /navigator\.serviceWorker\.register\('\.\/sw\.js'\)/,
+  'index should register a service worker for offline PWA support');
+assert.match(html, /@media\s*\(max-width:\s*720px\)[\s\S]*#bar[\s\S]*position:\s*fixed[\s\S]*overflow-x:\s*auto/,
+  'toolbar should become a horizontally scrollable fixed mobile control strip');
+assert.match(html, /@media\s*\(max-width:\s*720px\)[\s\S]*#layers[\s\S]*width:\s*min\(360px,\s*calc\(100vw - 24px\)\)/,
+  'layers panel should shrink to the mobile viewport width');
+
+const manifest = JSON.parse(fs.readFileSync(new URL('../manifest.webmanifest', `file://${__filename}`), 'utf8'));
+assert.equal(manifest.name, 'Tracer');
+assert.equal(manifest.display, 'standalone');
+assert.equal(manifest.start_url, './');
+assert.ok(manifest.icons.some(icon => icon.src === './icons/icon-192.svg' && icon.sizes === '192x192'),
+  'manifest should provide a 192px install icon');
+assert.ok(manifest.icons.some(icon => icon.src === './icons/icon-512.svg' && icon.sizes === '512x512'),
+  'manifest should provide a 512px install icon');
+
+const sw = fs.readFileSync(new URL('../sw.js', `file://${__filename}`), 'utf8');
+assert.match(sw, /const\s+PRECACHE_URLS\s*=\s*\[/, 'service worker should declare precache urls');
+assert.match(sw, /'\.\/index\.html'/, 'service worker should precache the app shell');
+assert.match(sw, /'\.\/manifest\.webmanifest'/, 'service worker should precache the manifest');
+assert.match(sw, /caches\.open\(CACHE_NAME\)/, 'service worker should populate the Cache API');
+assert.match(sw, /fetch\(event\.request\)/, 'service worker should fall back to network fetches');
+
+const deployWorkflow = fs.readFileSync(new URL('../.github/workflows/deploy-pages.yml', `file://${__filename}`), 'utf8');
+assert.match(deployWorkflow, /cp\s+manifest\.webmanifest\s+_site\//,
+  'Pages deploy should publish the web app manifest');
+assert.match(deployWorkflow, /cp\s+sw\.js\s+_site\//,
+  'Pages deploy should publish the service worker');
+assert.match(deployWorkflow, /cp\s+-R\s+icons\s+_site\//,
+  'Pages deploy should publish install icons');
+
 const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
 assert.equal(scripts.length, 1, 'expected one inline application script');
 

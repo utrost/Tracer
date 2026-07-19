@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Tracer icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#22c55e"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="#1e232b"/>
+  <rect x="26" y="26" width="140" height="140" rx="28" fill="url(#bg)" filter="url(#shadow)"/>
+  <path d="M48 130C72 88 102 138 144 62" fill="none" stroke="#fff" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="144" cy="62" r="10" fill="#fff"/>
+  <path d="M52 142l28-8-20-18z" fill="#111827" opacity="0.88"/>
+</svg>
