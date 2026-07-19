@@ -23,7 +23,14 @@
   Single self-contained file — no build step, no CDN. Open it off disk.
 -->
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1e232b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tracer">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icons/icon-192.svg">
 <title>Tracer</title>
 <style>
   :root {
@@ -145,6 +152,39 @@
     transition: opacity .2s; }
   #toast.show { opacity: 1; }
   #toast.err { background: rgba(239,68,68,0.95); color: #fff; }
+
+  @media (max-width: 900px) {
+    #bar { left: 10px; right: 10px; transform: none; justify-content: flex-start; }
+    #layers { top: 104px; }
+  }
+
+  @media (max-width: 720px) {
+    html, body { height: 100dvh; }
+    #stage { inset: 0; min-height: 100dvh; }
+    #bar { position: fixed; left: 8px; right: 8px; top: auto;
+      bottom: calc(8px + env(safe-area-inset-bottom)); transform: none;
+      flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; max-width: none;
+      padding: 7px 8px; border-radius: 14px; gap: 6px;
+      -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+    #bar > * { flex: 0 0 auto; scroll-snap-align: start; }
+    button, label.file { min-height: 44px; padding: 9px 10px; font-size: 12px; }
+    .field input[type=range] { width: 92px; }
+    .sep { width: 1px; min-width: 1px; }
+    #layers { position: fixed; left: 12px; top: calc(12px + env(safe-area-inset-top));
+      width: min(360px, calc(100vw - 24px)); max-height: min(42vh, 320px); }
+    #hud { left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom));
+      justify-content: space-between; gap: 8px; padding: 7px 10px; font-size: 11px; }
+    #press { right: 12px; bottom: calc(112px + env(safe-area-inset-bottom)); width: 136px; }
+    #hint { width: min(86vw, 420px); font-size: 14px; }
+    #toast { bottom: calc(128px + env(safe-area-inset-bottom)); width: max-content;
+      max-width: calc(100vw - 24px); text-align: center; }
+  }
+
+  @media (max-width: 480px) {
+    .field input[type=range] { width: 76px; }
+    #hud { flex-wrap: wrap; width: auto; }
+    #press { display: none; }
+  }
 </style>
 
 <div id="stage">
@@ -1042,6 +1082,14 @@ syncPenColor(); syncLayerOpacity(); renderLayerPanel();
 resize();
 fitView();
 updateHud();
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.warn('Tracer service worker registration failed', err);
+    });
+  });
+}
+
 // Expose a few internals for headless testing.
 window.__tracer = {
   get layers() { return layers; },
