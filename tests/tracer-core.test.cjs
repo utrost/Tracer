@@ -21,15 +21,23 @@ assert.equal(manifest.display, 'standalone');
 assert.equal(manifest.start_url, './');
 assert.ok(manifest.icons.some(icon => icon.src === './icons/icon-192.svg' && icon.sizes === '192x192'),
   'manifest should provide a 192px install icon');
+assert.ok(manifest.icons.some(icon => icon.src === './icons/icon-192.png' && icon.type === 'image/png'),
+  'manifest should provide a 192px PNG install icon for broad platform support');
 assert.ok(manifest.icons.some(icon => icon.src === './icons/icon-512.svg' && icon.sizes === '512x512'),
   'manifest should provide a 512px install icon');
+assert.ok(manifest.icons.some(icon => icon.src === './icons/icon-512.png' && icon.type === 'image/png'),
+  'manifest should provide a 512px PNG install icon for broad platform support');
 
 const sw = fs.readFileSync(new URL('../sw.js', `file://${__filename}`), 'utf8');
 assert.match(sw, /const\s+PRECACHE_URLS\s*=\s*\[/, 'service worker should declare precache urls');
 assert.match(sw, /'\.\/index\.html'/, 'service worker should precache the app shell');
 assert.match(sw, /'\.\/manifest\.webmanifest'/, 'service worker should precache the manifest');
+assert.match(sw, /'\.\/icons\/icon-192\.png'/, 'service worker should precache the 192px PNG icon');
+assert.match(sw, /'\.\/icons\/icon-512\.png'/, 'service worker should precache the 512px PNG icon');
 assert.match(sw, /caches\.open\(CACHE_NAME\)/, 'service worker should populate the Cache API');
 assert.match(sw, /fetch\(event\.request\)/, 'service worker should fall back to network fetches');
+assert.match(sw, /event\.request\.mode\s*===\s*'navigate'/,
+  'service worker should only serve the app shell fallback for navigation requests');
 
 const deployWorkflow = fs.readFileSync(new URL('../.github/workflows/deploy-pages.yml', `file://${__filename}`), 'utf8');
 assert.match(deployWorkflow, /cp\s+manifest\.webmanifest\s+_site\//,
@@ -38,6 +46,10 @@ assert.match(deployWorkflow, /cp\s+sw\.js\s+_site\//,
   'Pages deploy should publish the service worker');
 assert.match(deployWorkflow, /cp\s+-R\s+icons\s+_site\//,
   'Pages deploy should publish install icons');
+
+const packageJson = JSON.parse(fs.readFileSync(new URL('../package.json', `file://${__filename}`), 'utf8'));
+assert.equal(packageJson.scripts.test, 'node tests/tracer-core.test.cjs');
+assert.equal(packageJson.scripts.serve, 'python3 -m http.server 8000');
 
 const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
 assert.equal(scripts.length, 1, 'expected one inline application script');
@@ -64,6 +76,7 @@ class MockElement {
     (this.listeners[type] ||= []).push(listener);
   }
   removeEventListener() {}
+  setAttribute(name, value) { this[name] = String(value); }
   append(...children) { this.children.push(...children); }
   appendChild(child) { this.children.push(child); return child; }
   click() {}

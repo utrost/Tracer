@@ -30,7 +30,7 @@
 <meta name="apple-mobile-web-app-title" content="Tracer">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="./icons/icon-192.svg">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <title>Tracer</title>
 <style>
   :root {
@@ -223,17 +223,17 @@
     <label class="chk" title="Render pressure as variable line width"><input type="checkbox" id="varw" checked> Pressure</label>
     <div class="sep"></div>
     <div class="grp">
-      <button id="undo" class="ghost" title="Undo (Ctrl/Cmd+Z)">↶</button>
-      <button id="redo" class="ghost" title="Redo (Ctrl/Cmd+Shift+Z)">↷</button>
-      <button id="fit" class="ghost" title="Fit view to image">⤢ Fit</button>
-      <button id="clear" class="ghost danger" title="Clear all strokes">Clear</button>
+      <button id="undo" class="ghost" title="Undo (Ctrl/Cmd+Z)" aria-label="Undo last stroke">↶</button>
+      <button id="redo" class="ghost" title="Redo (Ctrl/Cmd+Shift+Z)" aria-label="Redo last undone stroke">↷</button>
+      <button id="fit" class="ghost" title="Fit view to image" aria-label="Fit artboard to viewport">⤢ Fit</button>
+      <button id="clear" class="ghost danger" title="Clear all strokes" aria-label="Clear strokes on active layer">Clear</button>
     </div>
     <div class="sep"></div>
     <div class="grp">
       <label class="chk" title="Store the reference image inside the JSON — makes it a portable, self-contained project file"><input type="checkbox" id="embedImg" checked> Embed</label>
-      <button id="connectFolder" class="ghost" title="Connect a folder to save files into directly (Chromium browsers)">📁 Folder</button>
-      <button id="saveJson" title="Save lossless .json (re-openable)">💾 JSON</button>
-      <button id="saveSvg" class="on" title="Export processed .svg">⬇︎ SVG</button>
+      <button id="connectFolder" class="ghost" title="Connect a folder to save files into directly (Chromium browsers)" aria-label="Connect a local save folder">📁 Folder</button>
+      <button id="saveJson" title="Save lossless .json (re-openable)" aria-label="Save lossless JSON project">💾 JSON</button>
+      <button id="saveSvg" class="on" title="Export processed .svg" aria-label="Export visible layers as SVG">⬇︎ SVG</button>
     </div>
   </div>
 
@@ -245,7 +245,7 @@
 
   <div id="layers">
     <div class="lp-head"><span>Layers</span>
-      <button id="addLayer" title="Add a new layer on top">＋</button></div>
+      <button id="addLayer" title="Add a new layer on top" aria-label="Add a new layer on top">＋</button></div>
     <div id="layerList"></div>
     <div class="lp-foot">
       <label>Opacity</label>
@@ -967,12 +967,16 @@ function renderLayerPanel() {
     const grip = document.createElement('div');
     grip.className = 'lgrip'; grip.textContent = '⠿';
     grip.title = 'Drag to reorder';
+    grip.setAttribute('role', 'button');
+    grip.tabIndex = 0;
+    grip.setAttribute('aria-label', `Reorder layer ${l.name}`);
     grip.addEventListener('pointerdown', (e) => { e.stopPropagation(); startLayerDrag(l.id, e); });
 
     const eye = document.createElement('button');
     eye.className = 'eye' + (l.visible ? '' : ' off');
     eye.textContent = l.visible ? '👁' : '🙈';
     eye.title = 'Toggle visibility';
+    eye.setAttribute('aria-label', `${l.visible ? 'Hide' : 'Show'} layer ${l.name}`);
     eye.onclick = (e) => { e.stopPropagation(); l.visible = !l.visible; renderLayerPanel(); render(); };
 
     const col = document.createElement('input');
@@ -995,6 +999,7 @@ function renderLayerPanel() {
 
     const del = document.createElement('button');
     del.className = 'ldel'; del.textContent = '✕'; del.title = 'Delete layer';
+    del.setAttribute('aria-label', `Delete layer ${l.name}`);
     del.onclick = (e) => { e.stopPropagation(); deleteLayer(l); };
 
     row.append(grip, eye, col, name, cnt, del);

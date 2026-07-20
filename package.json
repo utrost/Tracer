@@ -1,0 +1,11 @@
+{
+  "name": "tracer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A pen-first tracing surface with layers, pressure-sensitive strokes, JSON saves, and SVG export.",
+  "scripts": {
+    "test": "node tests/tracer-core.test.cjs",
+    "serve": "python3 -m http.server 8000"
+  },
+  "license": "GPL-3.0-only"
+}

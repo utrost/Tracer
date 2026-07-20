@@ -35,14 +35,27 @@ xdg-open index.html      # Linux
 
 ### Option B — GitHub Pages
 
-The live version is deployed automatically on every push to `main`:
+When the repository is public and GitHub Pages is enabled, the live version is deployed automatically on every push to `main`:
 
 **https://utrost.github.io/Tracer/**
+
+While the repository is private, open `index.html` locally or serve the checkout from `localhost` for PWA/service-worker testing.
+
+### Documentation
+
+- [User handbook](docs/user-handbook.md) — first tracing session, layers, saving, SVG export, PWA install, and troubleshooting.
+- [Architecture](docs/architecture.md) — state model, rendering pipeline, persistence, PWA behavior, and current trade-offs.
 
 ### Regression checks
 
 The distributable remains the single `index.html` file. The dependency-free
-core regression checks can be run separately with:
+core regression checks can be run with:
+
+```sh
+npm test
+```
+
+or directly with:
 
 ```sh
 node tests/tracer-core.test.cjs

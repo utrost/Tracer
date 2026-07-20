@@ -4,7 +4,9 @@ const PRECACHE_URLS = [
   './index.html',
   './manifest.webmanifest',
   './icons/icon-192.svg',
-  './icons/icon-512.svg'
+  './icons/icon-192.png',
+  './icons/icon-512.svg',
+  './icons/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
@@ -38,7 +40,10 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => caches.match('./index.html'));
+      }).catch(() => {
+        if (event.request.mode === 'navigate') return caches.match('./index.html');
+        return Response.error();
+      });
     })
   );
 });
