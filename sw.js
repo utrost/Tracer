@@ -1,9 +1,14 @@
-const CACHE_NAME = 'tracer-pwa-v2';
+const CACHE_NAME = 'tracer-pwa-v3';
 const PRECACHE_URLS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './docs/user-guide.md',
+  './docs/first-session.md',
+  './docs/feedback-template.md',
+  './docs/svg-handoff.md',
+  './docs/samples/reference-grid.svg',
+  './docs/samples/example-project.json',
   './icons/icon-192.svg',
   './icons/icon-192.png',
   './icons/icon-512.svg',

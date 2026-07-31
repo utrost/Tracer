@@ -14,6 +14,9 @@ Tracer is deliberately small: one static web app, no server, no account, no clou
 ## Documentation
 
 - [User guide](docs/user-guide.md) — practical first session, controls, saving, SVG export, tablet workflow, and troubleshooting.
+- [First-session workflow](docs/first-session.md) — guided sample run using bundled sample assets.
+- [Feedback template](docs/feedback-template.md) — compact real-device feedback capture.
+- [SVG handoff](docs/svg-handoff.md) — expected export structure and plotter/vector workflow notes.
 - [User handbook](docs/user-handbook.md) — fuller reference for browser/device behavior and file formats.
 - [Architecture](docs/architecture.md) — state model, rendering pipeline, persistence, PWA behavior, and trade-offs.
 - [Roadmap](ROADMAP.md) — current state through the target of 50 real users.
@@ -29,7 +32,9 @@ Tracer is deliberately small: one static web app, no server, no account, no clou
 - **SVG export** — visible layers export as SVG groups for the plotter/vector toolchain.
 - **Folder connect** — Chromium browsers can save directly into a chosen local folder.
 - **Offline/PWA support** — manifest, service worker, install icons, and app shell caching.
-- **In-app guide** — a compact guide panel is available from the toolbar, with a link to the full user guide.
+- **In-app guide** — a compact guide panel is available from the toolbar, with links to the full user guide and first-session workflow.
+- **Diagnostics panel** — reports pointer support, pressure sampling, folder-save availability, service-worker status, and current SVG export mode.
+- **Bundled first-run sample** — a simple reference grid and example project make the first tracing session testable without extra assets.
 
 ## Getting started
 

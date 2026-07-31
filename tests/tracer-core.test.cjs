@@ -22,23 +22,69 @@ const readme = readText('README.md');
 const userGuide = readText('docs/user-guide.md');
 const handbook = readText('docs/user-handbook.md');
 const roadmap = readText('ROADMAP.md');
+const feedbackTemplate = readText('docs/feedback-template.md');
+const testResultsReadme = readText('docs/test-results/README.md');
+const firstSessionGuide = readText('docs/first-session.md');
+const svgHandoff = readText('docs/svg-handoff.md');
 
 assert.match(readme, /\[User guide\]\(docs\/user-guide\.md\)/, 'README should link the practical user guide');
 assert.match(readme, /\[Roadmap\]\(ROADMAP\.md\)/, 'README should link the roadmap');
 assert.match(html, /<button id="help"[^>]*>[^<]*Guide/, 'app should expose an in-app user guide button');
+assert.match(html, /<button id="diagnostics"[^>]*>[^<]*Diagnostics/, 'app should expose a diagnostics button');
 assert.match(html, /id="guidePanel"/, 'app should contain an in-app user guide panel');
+assert.match(html, /id="diagnosticsPanel"/, 'app should contain an in-app diagnostics panel');
+assert.match(html, /id="pressureStatus"/, 'diagnostics should report pressure status');
+assert.match(html, /id="folderStatus"/, 'diagnostics should report Folder connect availability');
+assert.match(html, /id="serviceWorkerStatus"/, 'diagnostics should report service worker status');
+assert.match(html, /id="pointerStatus"/, 'diagnostics should report Pointer Events support');
 assert.match(html, /docs\/user-guide\.md/, 'app guide should link to the full markdown user guide');
+assert.match(html, /docs\/first-session\.md/, 'app guide should link to the guided first-session workflow');
+assert.match(html, /docs\/feedback-template\.md/, 'app diagnostics should link to the feedback template');
 assert.match(userGuide, /First tracing session/, 'user guide should cover a first tracing session');
 assert.match(userGuide, /Exporting SVG for plotting/, 'user guide should cover plotter-oriented SVG export');
+assert.match(userGuide, /\[Feedback template\]\(feedback-template\.md\)/, 'user guide should link to feedback template');
+assert.match(userGuide, /\[First-session workflow\]\(first-session\.md\)/, 'user guide should link to first-session workflow');
 assert.match(userGuide, /Troubleshooting/, 'user guide should include troubleshooting');
+assert.match(firstSessionGuide, /samples\/reference-grid\.svg/, 'first-session guide should use the bundled sample reference');
+assert.match(firstSessionGuide, /Save JSON/i, 'first-session guide should include JSON save step');
+assert.match(firstSessionGuide, /Export SVG/i, 'first-session guide should include SVG export step');
+assert.match(feedbackTemplate, /Device/i, 'feedback template should ask for device');
+assert.match(feedbackTemplate, /Browser/i, 'feedback template should ask for browser');
+assert.match(feedbackTemplate, /Pressure behavior/i, 'feedback template should ask for pressure behavior');
+assert.match(feedbackTemplate, /Export target/i, 'feedback template should ask for export target');
+assert.match(testResultsReadme, /Manual test log/i, 'test-results README should define manual test logs');
+assert.match(testResultsReadme, /Chrome Android/i, 'test-results README should include Chrome Android smoke coverage');
+assert.match(testResultsReadme, /Safari iPad/i, 'test-results README should include Safari iPad smoke coverage');
+assert.match(svgHandoff, /data-layer/i, 'SVG handoff docs should document layer groups');
+assert.match(svgHandoff, /fixed-width/i, 'SVG handoff docs should document fixed-width export mode');
+assert.match(svgHandoff, /pressure outline/i, 'SVG handoff docs should document pressure outline export mode');
 assert.match(handbook, /See also: \[User guide\]\(user-guide\.md\)/, 'handbook should cross-link the user guide');
 assert.match(roadmap, /Goal: 50 real users/i, 'roadmap should explicitly target 50 real users');
 assert.match(roadmap, /Current state/i, 'roadmap should document current state');
 assert.match(roadmap, /Milestone 1/i, 'roadmap should define staged milestones');
 assert.match(roadmap, /50 users/i, 'roadmap should include the 50-user target');
-for (const [path, text] of [['README.md', readme], ['docs/user-guide.md', userGuide], ['docs/user-handbook.md', handbook], ['ROADMAP.md', roadmap]]) {
+for (const [path, text] of [
+  ['README.md', readme],
+  ['docs/user-guide.md', userGuide],
+  ['docs/user-handbook.md', handbook],
+  ['ROADMAP.md', roadmap],
+  ['docs/feedback-template.md', feedbackTemplate],
+  ['docs/test-results/README.md', testResultsReadme],
+  ['docs/first-session.md', firstSessionGuide],
+  ['docs/svg-handoff.md', svgHandoff]
+]) {
   assertMarkdownLinkTargetsExist(path, text);
 }
+
+assert.ok(fs.existsSync(new URL('../docs/samples/reference-grid.svg', `file://${__filename}`)),
+  'sample reference SVG should be bundled');
+assert.ok(fs.existsSync(new URL('../docs/samples/example-project.json', `file://${__filename}`)),
+  'sample JSON project should be bundled');
+const sampleProject = JSON.parse(readText('docs/samples/example-project.json'));
+assert.equal(sampleProject.type, 'vhs-trace');
+assert.equal(sampleProject.version, 3);
+assert.ok(sampleProject.layers.some(layer => layer.name === 'Ink' && layer.strokes.length > 0),
+  'sample project should include an ink layer with a stroke');
 
 assert.match(html, /<link\s+rel="manifest"\s+href="\.\/manifest\.webmanifest"/,
   'index should expose a web app manifest for PWA installation');
@@ -71,6 +117,9 @@ assert.match(sw, /'\.\/manifest\.webmanifest'/, 'service worker should precache 
 assert.match(sw, /'\.\/icons\/icon-192\.png'/, 'service worker should precache the 192px PNG icon');
 assert.match(sw, /'\.\/icons\/icon-512\.png'/, 'service worker should precache the 512px PNG icon');
 assert.match(sw, /'\.\/docs\/user-guide\.md'/, 'service worker should precache the in-app linked user guide');
+assert.match(sw, /'\.\/docs\/first-session\.md'/, 'service worker should precache the guided first session');
+assert.match(sw, /'\.\/docs\/feedback-template\.md'/, 'service worker should precache the feedback template');
+assert.match(sw, /'\.\/docs\/samples\/reference-grid\.svg'/, 'service worker should precache the sample reference');
 assert.match(sw, /caches\.open\(CACHE_NAME\)/, 'service worker should populate the Cache API');
 assert.match(sw, /fetch\(event\.request\)/, 'service worker should fall back to network fetches');
 assert.match(sw, /event\.request\.mode\s*===\s*'navigate'/,
@@ -87,6 +136,8 @@ assert.match(deployWorkflow, /cp\s+-R\s+docs\s+_site\//,
   'Pages deploy should publish user-facing documentation linked from the app');
 assert.match(deployWorkflow, /cp\s+ROADMAP\.md\s+_site\//,
   'Pages deploy should publish the roadmap linked from the user guide');
+assert.match(deployWorkflow, /test\s+-f\s+_site\/docs\/samples\/reference-grid\.svg/,
+  'Pages deploy verification should require sample reference asset');
 
 const packageJson = JSON.parse(fs.readFileSync(new URL('../package.json', `file://${__filename}`), 'utf8'));
 assert.equal(packageJson.scripts.test, 'node tests/tracer-core.test.cjs');
@@ -150,6 +201,7 @@ const document = {
 const windowListeners = {};
 const window = {
   devicePixelRatio: 1,
+  PointerEvent: class PointerEvent {},
   addEventListener(type, listener) { (windowListeners[type] ||= []).push(listener); },
   removeEventListener: noop
 };
@@ -195,6 +247,11 @@ tracer.loadTraceJSON({
 assert.equal(tracer.cfg.stab, 0.35, 'v2 internal stabilizer strength should be preserved');
 assert.equal(JSON.parse(tracer.buildJSON()).settings.stabilizer, 0.4118);
 
+assert.ok(tracer.buildDiagnostics().some(item => item.id === 'pointer' && /supported/i.test(item.value)),
+  'diagnostics should expose pointer support status');
+assert.ok(tracer.buildDiagnostics().some(item => item.id === 'folder' && /unavailable|available/i.test(item.value)),
+  'diagnostics should expose folder-connect status');
+
 tracer.loadTraceJSON({
   type: 'vhs-trace', version: 3,
   artboard: { width: '1" onload="bad', height: -5 },
@@ -224,6 +281,30 @@ const svg = tracer.buildSVG();
 assert.doesNotMatch(svg, /onload/i);
 assert.match(svg, /fill="#111111"/);
 assert.match(svg, /data-layer="&lt;bad&quot; &amp;"/);
+
+tracer.loadTraceJSON({
+  type: 'vhs-trace', version: 3,
+  artboard: { width: 300, height: 200 }, image: null,
+  settings: { stabilizer: 0, smooth: false, variable_width: false },
+  layers: [
+    { name: 'Ink', color: '#111111', visible: true, opacity: 1, strokes: [
+      { color: '#111111', width: 4, points: [{ x: 10, y: 10, p: 0.4, t: 1 }, { x: 40, y: 40, p: 0.4, t: 2 }] }
+    ] },
+    { name: 'Hidden', color: '#ff0000', visible: false, opacity: 1, strokes: [
+      { color: '#ff0000', width: 4, points: [{ x: 50, y: 10, p: 1, t: 1 }, { x: 80, y: 40, p: 1, t: 2 }] }
+    ] }
+  ]
+});
+const fixedSvg = tracer.buildSVG();
+assert.match(fixedSvg, /<g data-layer="Ink"/);
+assert.doesNotMatch(fixedSvg, /data-layer="Hidden"/);
+assert.match(fixedSvg, /stroke-width="4"/);
+assert.doesNotMatch(fixedSvg, /fill="#111111"/);
+
+tracer.setVariableWidth(true);
+const pressureSvg = tracer.buildSVG();
+assert.match(pressureSvg, /fill="#111111"/);
+assert.doesNotMatch(pressureSvg, /stroke-width="4"/);
 
 tracer.loadTraceJSON({
   type: 'vhs-trace', version: 3, artboard: { width: 1000, height: 1400 },

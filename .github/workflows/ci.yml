@@ -36,4 +36,10 @@ jobs:
           test -f _site/icons/icon-512.svg
           test -f _site/icons/icon-512.png
           test -f _site/docs/user-guide.md
+          test -f _site/docs/first-session.md
+          test -f _site/docs/feedback-template.md
+          test -f _site/docs/svg-handoff.md
+          test -f _site/docs/test-results/README.md
+          test -f _site/docs/samples/reference-grid.svg
+          test -f _site/docs/samples/example-project.json
           test -f _site/ROADMAP.md

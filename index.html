@@ -145,21 +145,24 @@
   .lp-foot .val { font-size: 11px; }
 
   /* Guide panel */
-  #guidePanel { position: absolute; right: 12px; top: 88px; width: min(360px, calc(100vw - 24px));
+  #guidePanel, #diagnosticsPanel { position: absolute; right: 12px; top: 88px; width: min(360px, calc(100vw - 24px));
     max-height: calc(100vh - 120px); overflow-y: auto; z-index: 7;
     background: rgba(30,35,43,0.96); backdrop-filter: blur(8px);
     border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;
     box-shadow: 0 16px 48px rgba(0,0,0,0.45); padding: 14px 16px;
     display: none; line-height: 1.45; }
-  #guidePanel.open { display: block; }
-  #guidePanel h2 { margin: 0 0 8px; font-size: 16px; }
-  #guidePanel h3 { margin: 14px 0 6px; font-size: 12px; color: var(--muted);
+  #guidePanel.open, #diagnosticsPanel.open { display: block; }
+  #guidePanel h2, #diagnosticsPanel h2 { margin: 0 0 8px; font-size: 16px; }
+  #guidePanel h3, #diagnosticsPanel h3 { margin: 14px 0 6px; font-size: 12px; color: var(--muted);
     text-transform: uppercase; letter-spacing: .05em; }
-  #guidePanel p, #guidePanel li { font-size: 13px; color: #d7dde6; }
-  #guidePanel ol, #guidePanel ul { padding-left: 20px; margin: 6px 0; }
-  #guidePanel a { color: #a5b4fc; }
+  #guidePanel p, #guidePanel li, #diagnosticsPanel p, #diagnosticsPanel li { font-size: 13px; color: #d7dde6; }
+  #guidePanel ol, #guidePanel ul, #diagnosticsPanel ol, #diagnosticsPanel ul { padding-left: 20px; margin: 6px 0; }
+  #guidePanel a, #diagnosticsPanel a { color: #a5b4fc; }
   .guide-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  #closeGuide { min-height: 32px; padding: 4px 9px; }
+  .diag-grid { display: grid; gap: 8px; margin: 10px 0; }
+  .diag-row { display: grid; grid-template-columns: 120px 1fr; gap: 8px; font-size: 13px; }
+  .diag-row b { color: var(--muted); }
+  #closeGuide, #closeDiagnostics { min-height: 32px; padding: 4px 9px; }
 
   /* Save toast */
   #toast { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
@@ -189,7 +192,7 @@
     .sep { width: 1px; min-width: 1px; }
     #layers { position: fixed; left: 12px; top: calc(12px + env(safe-area-inset-top));
       width: min(360px, calc(100vw - 24px)); max-height: min(42vh, 320px); }
-    #guidePanel { position: fixed; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top));
+    #guidePanel, #diagnosticsPanel { position: fixed; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top));
       width: auto; max-height: calc(100dvh - 104px - env(safe-area-inset-bottom)); }
     #hud { left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom));
       justify-content: space-between; gap: 8px; padding: 7px 10px; font-size: 11px; }
@@ -212,6 +215,7 @@
   <div id="bar">
     <div class="grp">
       <button id="help" class="ghost" title="Open the quick Tracer guide" aria-controls="guidePanel" aria-expanded="false">Guide</button>
+      <button id="diagnostics" class="ghost" title="Show browser and stylus diagnostics" aria-controls="diagnosticsPanel" aria-expanded="false">Diagnostics</button>
       <label class="file" title="Load a reference image to trace">
         🖼️ Image<input type="file" id="imgFile" accept="image/*">
       </label>
@@ -293,7 +297,23 @@
       <li>SVG contains visible drawing layers, not the reference image.</li>
       <li>If pressure behaves badly, turn <b>Pressure</b> off and export fixed-width paths.</li>
     </ul>
-    <p><a href="docs/user-guide.md" target="_blank" rel="noopener">Open full user guide</a></p>
+    <p><a href="docs/user-guide.md" target="_blank" rel="noopener">Open full user guide</a> · <a href="docs/first-session.md" target="_blank" rel="noopener">First-session workflow</a></p>
+  </aside>
+
+  <aside id="diagnosticsPanel" aria-label="Tracer diagnostics">
+    <div class="guide-head">
+      <h2>Diagnostics</h2>
+      <button id="closeDiagnostics" class="ghost" aria-label="Close diagnostics">✕</button>
+    </div>
+    <p>Use this when checking a browser, stylus, PWA install, or export issue.</p>
+    <div class="diag-grid">
+      <div class="diag-row"><b>Pointer Events</b><span id="pointerStatus">not checked</span></div>
+      <div class="diag-row"><b>Pressure</b><span id="pressureStatus">no pen samples yet</span></div>
+      <div class="diag-row"><b>Folder</b><span id="folderStatus">not checked</span></div>
+      <div class="diag-row"><b>Service worker</b><span id="serviceWorkerStatus">not checked</span></div>
+      <div class="diag-row"><b>Export mode</b><span id="exportStatus">not checked</span></div>
+    </div>
+    <p><a href="docs/feedback-template.md" target="_blank" rel="noopener">Open feedback template</a></p>
   </aside>
 
   <div id="hud">
@@ -331,6 +351,7 @@ let activeId = null;               // id of the layer new strokes go into
 let undoStack = [];                // [{layerId, stroke}] in draw order
 let redoStack = [];
 let current = null;                // stroke being drawn
+let pressureStats = { count: 0, min: 1, max: 0, nonDefault: 0 };
 let layerSeq = 0;                  // monotonic counter for default names/colours
 
 const LAYER_PALETTE = ['#111111', '#ef4444', '#2563eb', '#16a34a',
@@ -610,8 +631,13 @@ function addPoint(e) {
   const p = (e.pressure > 0 && e.pressure !== 0.5) ? e.pressure
             : (e.pointerType === 'pen' ? e.pressure : 0.5); // mouse has no pressure
   const pv = (typeof p === 'number' && p > 0) ? p : 0.5;
+  pressureStats.count++;
+  pressureStats.min = Math.min(pressureStats.min, pv);
+  pressureStats.max = Math.max(pressureStats.max, pv);
+  if (Math.abs(pv - 0.5) > 0.02) pressureStats.nonDefault++;
   current.points.push({ x: a.x, y: a.y, p: pv, t: Date.now() });
   showPressure(pv);
+  updateDiagnosticsPanel();
 }
 
 // ── Touch gestures: 1 finger pan, 2 finger pinch-zoom ──
@@ -921,7 +947,7 @@ document.getElementById('penColor').addEventListener('input', (e) => {
   if (l) setLayerColor(l, e.target.value); else cfg.penColor = e.target.value;
 });
 document.getElementById('smooth').addEventListener('change', (e) => { cfg.smooth = e.target.checked; render(); });
-document.getElementById('varw').addEventListener('change', (e) => { cfg.varw = e.target.checked; render(); });
+document.getElementById('varw').addEventListener('change', (e) => { cfg.varw = e.target.checked; render(); updateDiagnosticsPanel(); });
 document.getElementById('embedImg').addEventListener('change', (e) => { cfg.embedImage = e.target.checked; });
 
 document.getElementById('fit').addEventListener('click', fitView);
@@ -937,14 +963,55 @@ document.getElementById('undo').addEventListener('click', undo);
 document.getElementById('redo').addEventListener('click', redo);
 const helpBtn = document.getElementById('help');
 const guidePanel = document.getElementById('guidePanel');
+const diagnosticsBtn = document.getElementById('diagnostics');
+const diagnosticsPanel = document.getElementById('diagnosticsPanel');
+function setPanelOpen(button, panel, open) {
+  panel.classList[open ? 'add' : 'remove']('open');
+  button.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
 function setGuideOpen(open) {
-  guidePanel.classList[open ? 'add' : 'remove']('open');
-  helpBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) setDiagnosticsOpen(false);
+  setPanelOpen(helpBtn, guidePanel, open);
+}
+function setDiagnosticsOpen(open) {
+  if (open) {
+    setPanelOpen(helpBtn, guidePanel, false);
+    updateDiagnosticsPanel();
+  }
+  setPanelOpen(diagnosticsBtn, diagnosticsPanel, open);
+}
+function pressureStatusText() {
+  if (!pressureStats.count) return 'no pen samples yet';
+  if (!pressureStats.nonDefault || Math.abs(pressureStats.max - pressureStats.min) < 0.03) {
+    return `flat pressure (${pressureStats.count} sample${pressureStats.count === 1 ? '' : 's'})`;
+  }
+  return `varying ${pressureStats.min.toFixed(2)}–${pressureStats.max.toFixed(2)} (${pressureStats.count} samples)`;
+}
+function buildDiagnostics() {
+  const pointerSupported = typeof window !== 'undefined' && 'PointerEvent' in window;
+  const folderAvailable = typeof window !== 'undefined' && !!window.showDirectoryPicker;
+  const swAvailable = typeof navigator !== 'undefined' && 'serviceWorker' in navigator;
+  const swControlled = swAvailable && !!navigator.serviceWorker.controller;
+  return [
+    { id: 'pointer', value: pointerSupported ? 'supported' : 'not detected' },
+    { id: 'pressure', value: pressureStatusText() },
+    { id: 'folder', value: folderAvailable ? 'available in this browser' : 'unavailable; use downloads' },
+    { id: 'serviceWorker', value: swControlled ? 'active for this page' : (swAvailable ? 'available; activates after reload/install' : 'unavailable') },
+    { id: 'export', value: cfg.varw ? 'pressure outline SVG' : 'fixed-width SVG paths' }
+  ];
+}
+function updateDiagnosticsPanel() {
+  for (const item of buildDiagnostics()) {
+    const el = document.getElementById(item.id + 'Status');
+    if (el) el.textContent = item.value;
+  }
 }
 helpBtn.addEventListener('click', () => setGuideOpen(!guidePanel.classList.contains('open')));
+diagnosticsBtn.addEventListener('click', () => setDiagnosticsOpen(!diagnosticsPanel.classList.contains('open')));
 document.getElementById('closeGuide').addEventListener('click', () => setGuideOpen(false));
+document.getElementById('closeDiagnostics').addEventListener('click', () => setDiagnosticsOpen(false));
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') setGuideOpen(false);
+  if (e.key === 'Escape') { setGuideOpen(false); setDiagnosticsOpen(false); }
 });
 function baseName() { return bgName ? bgName.replace(/\.[^.]+$/, '') : 'trace'; }
 document.getElementById('saveJson').addEventListener('click', () =>
@@ -1154,9 +1221,10 @@ window.__tracer = {
   get strokes() { return allStrokes(); },
   get activeId() { return activeId; },
   get view() { return view; },
-  buildJSON, buildSVG, loadTraceJSON, processStroke,
+  buildJSON, buildSVG, loadTraceJSON, processStroke, buildDiagnostics,
   addLayer, renderLayerPanel, render, updateHud,
   loadImageFromSrc, cfg, reorderTo, saveFile,
+  setVariableWidth(v) { cfg.varw = !!v; document.getElementById('varw').checked = !!v; updateDiagnosticsPanel(); },
   setDirHandle(h) { dirHandle = h; },
   get imageSrc() { return bgImage ? bgImage.src : null; },
   get imageName() { return bgName; },
