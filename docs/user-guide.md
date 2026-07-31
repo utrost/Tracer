@@ -42,11 +42,11 @@ Smooths hand jitter while preserving raw points in the saved JSON. A low value f
 
 Applies Catmull-Rom curve interpolation when rendering and exporting. This is also non-destructive: the raw points stay in the JSON.
 
-### Pressure
+### Pressure width
 
-When enabled, pen pressure changes stroke thickness. SVG export bakes the result into filled outline shapes. When disabled, SVG uses fixed-width paths.
+This is the optional flag for pressure-sensitive thickness. When **Pressure width** is enabled, more pressure makes thicker lines and lighter pressure makes thinner lines. SVG export bakes the result into filled pressure-outline shapes. When disabled, SVG uses fixed-width paths based only on the **Width** slider.
 
-If your device does not provide useful pressure, disable **Pressure** and treat Tracer as a fixed-line tracing tool.
+If your device does not provide useful pressure, disable **Pressure width** and treat Tracer as a fixed-line tracing tool.
 
 ### Layers
 
@@ -95,7 +95,7 @@ Recommended plotter-chain workflow:
 2. Hide construction layers before export.
 3. Export SVG.
 4. Inspect the SVG in the next vector tool before plotting.
-5. If pressure outlines are too heavy for the target tool, disable **Pressure** and export again as fixed-width paths.
+5. If pressure outlines are too heavy for the target tool, disable **Pressure width** and export again as fixed-width paths.
 
 Tracer is not a raster vectorizer. It does not automatically convert the reference image into paths. The hand-drawn tracing is the output.
 
@@ -117,9 +117,9 @@ If controls feel cramped, rotate the device or use a browser that lets the PWA r
 
 PWA installation requires HTTPS or `localhost`. Use the GitHub Pages or simiono deployment, not a raw `file://` copy, when testing installation.
 
-### Pressure does not change line width
+### Pressure width does not change line width
 
-Check that **Pressure** is enabled. If it still looks flat, your browser, operating system, or stylus may not expose pressure through Pointer Events. You can still draw and export fixed-width SVG.
+Check that **Pressure width** is enabled. If it still looks flat, your browser, operating system, or stylus may not expose pressure through Pointer Events. You can still draw and export fixed-width SVG.
 
 ### Folder connect is missing
 
@@ -127,7 +127,7 @@ Your browser probably does not support the File System Access API. Use normal do
 
 ### The exported SVG looks different from the canvas
 
-Check whether **Smooth** and **Pressure** are enabled. Pressure export uses filled outline polygons; fixed-width export uses regular SVG paths.
+Check whether **Smooth** and **Pressure width** are enabled. Pressure-width export uses filled outline polygons; fixed-width export uses regular SVG paths.
 
 ### The JSON file is large
 

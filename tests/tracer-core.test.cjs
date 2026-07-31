@@ -33,6 +33,10 @@ assert.match(html, /<button id="help"[^>]*>[^<]*Guide/, 'app should expose an in
 assert.match(html, /<button id="diagnostics"[^>]*>[^<]*Diagnostics/, 'app should expose a diagnostics button');
 assert.match(html, /id="guidePanel"/, 'app should contain an in-app user guide panel');
 assert.match(html, /id="diagnosticsPanel"/, 'app should contain an in-app diagnostics panel');
+assert.match(html, /<input type="checkbox" id="varw" checked> Pressure width<\/label>/,
+  'app should expose an explicit Pressure width flag');
+assert.match(html, /More pressure makes thicker lines/,
+  'pressure-width flag should explain that more pressure makes thicker lines');
 assert.match(html, /id="pressureStatus"/, 'diagnostics should report pressure status');
 assert.match(html, /id="folderStatus"/, 'diagnostics should report Folder connect availability');
 assert.match(html, /id="serviceWorkerStatus"/, 'diagnostics should report service worker status');
@@ -42,8 +46,12 @@ assert.match(html, /docs\/first-session\.md/, 'app guide should link to the guid
 assert.match(html, /docs\/feedback-template\.md/, 'app diagnostics should link to the feedback template');
 assert.match(userGuide, /First tracing session/, 'user guide should cover a first tracing session');
 assert.match(userGuide, /Exporting SVG for plotting/, 'user guide should cover plotter-oriented SVG export');
+assert.match(userGuide, /Pressure width/, 'user guide should name the pressure-width flag');
+assert.match(userGuide, /more pressure[^\n]+thicker/i, 'user guide should explain pressure increases line thickness');
 assert.match(userGuide, /\[Feedback template\]\(feedback-template\.md\)/, 'user guide should link to feedback template');
 assert.match(userGuide, /\[First-session workflow\]\(first-session\.md\)/, 'user guide should link to first-session workflow');
+assert.match(svgHandoff, /Pressure width/, 'SVG handoff docs should name the pressure-width flag');
+assert.match(svgHandoff, /More pressure makes thicker lines/, 'SVG handoff docs should state the pressure behavior plainly');
 assert.match(userGuide, /Troubleshooting/, 'user guide should include troubleshooting');
 assert.match(firstSessionGuide, /samples\/reference-grid\.svg/, 'first-session guide should use the bundled sample reference');
 assert.match(firstSessionGuide, /Save JSON/i, 'first-session guide should include JSON save step');
@@ -305,6 +313,23 @@ tracer.setVariableWidth(true);
 const pressureSvg = tracer.buildSVG();
 assert.match(pressureSvg, /fill="#111111"/);
 assert.doesNotMatch(pressureSvg, /stroke-width="4"/);
+
+tracer.loadTraceJSON({
+  type: 'vhs-trace', version: 3,
+  artboard: { width: 120, height: 100 }, image: null,
+  settings: { stabilizer: 0, smooth: false, variable_width: true },
+  layers: [{ name: 'Ink', color: '#111111', visible: true, opacity: 1, strokes: [
+    { color: '#111111', width: 10, points: [{ x: 10, y: 50, p: 0, t: 1 }, { x: 90, y: 50, p: 1, t: 2 }] }
+  ] }]
+});
+const pressureWidthSvg = tracer.buildSVG();
+assert.match(pressureWidthSvg, /57\.5/, 'high pressure should create the thicker side of the outline');
+assert.match(pressureWidthSvg, /42\.5/, 'high pressure should create the opposite thicker side of the outline');
+tracer.setVariableWidth(false);
+const noPressureWidthSvg = tracer.buildSVG();
+assert.doesNotMatch(noPressureWidthSvg, /57\.5|42\.5/,
+  'turning the Pressure width flag off should export a fixed-width centerline path');
+assert.match(noPressureWidthSvg, /stroke-width="10"/);
 
 tracer.loadTraceJSON({
   type: 'vhs-trace', version: 3, artboard: { width: 1000, height: 1400 },

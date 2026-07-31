@@ -104,7 +104,7 @@ JSON is the working format. SVG is the output format. The reference image is not
 | **Width** | Base stroke width before pressure scaling. |
 | **Stabilizer** | Smooth hand jitter. |
 | **Smooth** | Toggle curve interpolation. |
-| **Pressure** | Toggle pressure-to-width rendering. |
+| **Pressure width** | Toggle whether more pressure makes thicker lines. |
 | **Undo / Redo** | Step through stroke history. |
 | **Fit** | Fit the artboard into the viewport. |
 | **Clear** | Clear the active layer. |
@@ -121,7 +121,7 @@ JSON is lossless and re-openable. It stores artboard size, optional embedded ref
 
 ### SVG
 
-SVG contains visible drawing layers only. With **Pressure** enabled, strokes are exported as filled outline polygons. With **Pressure** disabled, strokes export as fixed-width paths.
+SVG contains visible drawing layers only. With **Pressure width** enabled, more pressure makes thicker filled outline polygons. With **Pressure width** disabled, strokes export as fixed-width paths.
 
 ## Browser compatibility
 
