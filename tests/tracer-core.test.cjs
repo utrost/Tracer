@@ -85,6 +85,8 @@ assert.match(deployWorkflow, /cp\s+-R\s+icons\s+_site\//,
   'Pages deploy should publish install icons');
 assert.match(deployWorkflow, /cp\s+-R\s+docs\s+_site\//,
   'Pages deploy should publish user-facing documentation linked from the app');
+assert.match(deployWorkflow, /cp\s+ROADMAP\.md\s+_site\//,
+  'Pages deploy should publish the roadmap linked from the user guide');
 
 const packageJson = JSON.parse(fs.readFileSync(new URL('../package.json', `file://${__filename}`), 'utf8'));
 assert.equal(packageJson.scripts.test, 'node tests/tracer-core.test.cjs');
