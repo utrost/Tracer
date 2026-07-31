@@ -27,6 +27,7 @@ jobs:
           cp sw.js _site/
           cp -R icons _site/
           cp -R docs _site/
+          cp ROADMAP.md _site/
           test -f _site/index.html
           test -f _site/manifest.webmanifest
           test -f _site/sw.js
@@ -35,3 +36,4 @@ jobs:
           test -f _site/icons/icon-512.svg
           test -f _site/icons/icon-512.png
           test -f _site/docs/user-guide.md
+          test -f _site/ROADMAP.md
