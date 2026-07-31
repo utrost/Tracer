@@ -144,6 +144,23 @@
   .lp-foot input[type=range] { flex: 1; accent-color: var(--accent); }
   .lp-foot .val { font-size: 11px; }
 
+  /* Guide panel */
+  #guidePanel { position: absolute; right: 12px; top: 88px; width: min(360px, calc(100vw - 24px));
+    max-height: calc(100vh - 120px); overflow-y: auto; z-index: 7;
+    background: rgba(30,35,43,0.96); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.45); padding: 14px 16px;
+    display: none; line-height: 1.45; }
+  #guidePanel.open { display: block; }
+  #guidePanel h2 { margin: 0 0 8px; font-size: 16px; }
+  #guidePanel h3 { margin: 14px 0 6px; font-size: 12px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .05em; }
+  #guidePanel p, #guidePanel li { font-size: 13px; color: #d7dde6; }
+  #guidePanel ol, #guidePanel ul { padding-left: 20px; margin: 6px 0; }
+  #guidePanel a { color: #a5b4fc; }
+  .guide-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  #closeGuide { min-height: 32px; padding: 4px 9px; }
+
   /* Save toast */
   #toast { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
     z-index: 9; background: rgba(34,197,94,0.95); color: #06210f;
@@ -172,6 +189,8 @@
     .sep { width: 1px; min-width: 1px; }
     #layers { position: fixed; left: 12px; top: calc(12px + env(safe-area-inset-top));
       width: min(360px, calc(100vw - 24px)); max-height: min(42vh, 320px); }
+    #guidePanel { position: fixed; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top));
+      width: auto; max-height: calc(100dvh - 104px - env(safe-area-inset-bottom)); }
     #hud { left: 12px; right: 12px; bottom: calc(72px + env(safe-area-inset-bottom));
       justify-content: space-between; gap: 8px; padding: 7px 10px; font-size: 11px; }
     #press { right: 12px; bottom: calc(112px + env(safe-area-inset-bottom)); width: 136px; }
@@ -192,6 +211,7 @@
 
   <div id="bar">
     <div class="grp">
+      <button id="help" class="ghost" title="Open the quick Tracer guide" aria-controls="guidePanel" aria-expanded="false">Guide</button>
       <label class="file" title="Load a reference image to trace">
         🖼️ Image<input type="file" id="imgFile" accept="image/*">
       </label>
@@ -253,6 +273,28 @@
       <span class="val" id="layerOpacityV">100%</span>
     </div>
   </div>
+
+  <aside id="guidePanel" aria-label="Tracer quick guide">
+    <div class="guide-head">
+      <h2>Tracer quick guide</h2>
+      <button id="closeGuide" class="ghost" aria-label="Close guide">✕</button>
+    </div>
+    <p>Load a reference image, fade it back, trace on layers, then save JSON or export SVG.</p>
+    <h3>First session</h3>
+    <ol>
+      <li>Use <b>Image</b> to load a reference.</li>
+      <li>Lower <b>Image</b> opacity so your strokes stand out.</li>
+      <li>Draw with pen or mouse. One finger pans; two fingers pinch-zoom.</li>
+      <li>Save <b>JSON</b> to continue later. Export <b>SVG</b> for vector/plotter handoff.</li>
+    </ol>
+    <h3>Remember</h3>
+    <ul>
+      <li>JSON is the working project file.</li>
+      <li>SVG contains visible drawing layers, not the reference image.</li>
+      <li>If pressure behaves badly, turn <b>Pressure</b> off and export fixed-width paths.</li>
+    </ul>
+    <p><a href="docs/user-guide.md" target="_blank" rel="noopener">Open full user guide</a></p>
+  </aside>
 
   <div id="hud">
     <span>Zoom <b id="zoomV">100%</b></span>
@@ -893,6 +935,17 @@ document.getElementById('clear').addEventListener('click', () => {
 });
 document.getElementById('undo').addEventListener('click', undo);
 document.getElementById('redo').addEventListener('click', redo);
+const helpBtn = document.getElementById('help');
+const guidePanel = document.getElementById('guidePanel');
+function setGuideOpen(open) {
+  guidePanel.classList[open ? 'add' : 'remove']('open');
+  helpBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+helpBtn.addEventListener('click', () => setGuideOpen(!guidePanel.classList.contains('open')));
+document.getElementById('closeGuide').addEventListener('click', () => setGuideOpen(false));
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') setGuideOpen(false);
+});
 function baseName() { return bgName ? bgName.replace(/\.[^.]+$/, '') : 'trace'; }
 document.getElementById('saveJson').addEventListener('click', () =>
   saveFile(baseName() + '.json', 'application/json', buildJSON()));

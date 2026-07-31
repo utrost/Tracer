@@ -3,6 +3,42 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(new URL('../index.html', `file://${__filename}`), 'utf8');
+const readText = relativePath => fs.readFileSync(new URL(`../${relativePath}`, `file://${__filename}`), 'utf8');
+const assertMarkdownLinkTargetsExist = (relativePath, text) => {
+  const base = new URL(`../${relativePath}`, `file://${__filename}`);
+  const problems = [];
+  for (const match of text.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
+    const target = match[1];
+    if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('#') || target.startsWith('mailto:')) continue;
+    const cleanTarget = target.split('#', 1)[0];
+    if (!cleanTarget) continue;
+    const targetPath = new URL(cleanTarget, base);
+    if (!fs.existsSync(targetPath)) problems.push(`${relativePath}: broken link ${target}`);
+  }
+  assert.deepEqual(problems, []);
+};
+
+const readme = readText('README.md');
+const userGuide = readText('docs/user-guide.md');
+const handbook = readText('docs/user-handbook.md');
+const roadmap = readText('ROADMAP.md');
+
+assert.match(readme, /\[User guide\]\(docs\/user-guide\.md\)/, 'README should link the practical user guide');
+assert.match(readme, /\[Roadmap\]\(ROADMAP\.md\)/, 'README should link the roadmap');
+assert.match(html, /<button id="help"[^>]*>[^<]*Guide/, 'app should expose an in-app user guide button');
+assert.match(html, /id="guidePanel"/, 'app should contain an in-app user guide panel');
+assert.match(html, /docs\/user-guide\.md/, 'app guide should link to the full markdown user guide');
+assert.match(userGuide, /First tracing session/, 'user guide should cover a first tracing session');
+assert.match(userGuide, /Exporting SVG for plotting/, 'user guide should cover plotter-oriented SVG export');
+assert.match(userGuide, /Troubleshooting/, 'user guide should include troubleshooting');
+assert.match(handbook, /See also: \[User guide\]\(user-guide\.md\)/, 'handbook should cross-link the user guide');
+assert.match(roadmap, /Goal: 50 real users/i, 'roadmap should explicitly target 50 real users');
+assert.match(roadmap, /Current state/i, 'roadmap should document current state');
+assert.match(roadmap, /Milestone 1/i, 'roadmap should define staged milestones');
+assert.match(roadmap, /50 users/i, 'roadmap should include the 50-user target');
+for (const [path, text] of [['README.md', readme], ['docs/user-guide.md', userGuide], ['docs/user-handbook.md', handbook], ['ROADMAP.md', roadmap]]) {
+  assertMarkdownLinkTargetsExist(path, text);
+}
 
 assert.match(html, /<link\s+rel="manifest"\s+href="\.\/manifest\.webmanifest"/,
   'index should expose a web app manifest for PWA installation');
@@ -34,6 +70,7 @@ assert.match(sw, /'\.\/index\.html'/, 'service worker should precache the app sh
 assert.match(sw, /'\.\/manifest\.webmanifest'/, 'service worker should precache the manifest');
 assert.match(sw, /'\.\/icons\/icon-192\.png'/, 'service worker should precache the 192px PNG icon');
 assert.match(sw, /'\.\/icons\/icon-512\.png'/, 'service worker should precache the 512px PNG icon');
+assert.match(sw, /'\.\/docs\/user-guide\.md'/, 'service worker should precache the in-app linked user guide');
 assert.match(sw, /caches\.open\(CACHE_NAME\)/, 'service worker should populate the Cache API');
 assert.match(sw, /fetch\(event\.request\)/, 'service worker should fall back to network fetches');
 assert.match(sw, /event\.request\.mode\s*===\s*'navigate'/,
@@ -46,6 +83,8 @@ assert.match(deployWorkflow, /cp\s+sw\.js\s+_site\//,
   'Pages deploy should publish the service worker');
 assert.match(deployWorkflow, /cp\s+-R\s+icons\s+_site\//,
   'Pages deploy should publish install icons');
+assert.match(deployWorkflow, /cp\s+-R\s+docs\s+_site\//,
+  'Pages deploy should publish user-facing documentation linked from the app');
 
 const packageJson = JSON.parse(fs.readFileSync(new URL('../package.json', `file://${__filename}`), 'utf8'));
 assert.equal(packageJson.scripts.test, 'node tests/tracer-core.test.cjs');

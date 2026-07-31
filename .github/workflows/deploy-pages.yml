@@ -30,6 +30,7 @@ jobs:
           cp manifest.webmanifest _site/
           cp sw.js _site/
           cp -R icons _site/
+          cp -R docs _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

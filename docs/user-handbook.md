@@ -151,3 +151,5 @@ Embedded reference images and very dense strokes can create large files. Save wi
 ### The canvas moves instead of drawing
 
 Use a pen or mouse to draw. Touch input is reserved for pan and pinch-zoom so that tablet navigation remains predictable.
+
+See also: [User guide](user-guide.md), [Architecture](architecture.md), [Roadmap](../ROADMAP.md).
