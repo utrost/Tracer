@@ -20,8 +20,10 @@ Tracer is a static, dependency-free web application for pressure-sensitive image
 ├── icons/                     # PWA install icons
 ├── docs/
 │   ├── screenshot.png
+│   ├── user-guide.md
 │   ├── user-handbook.md
 │   └── architecture.md
+├── ROADMAP.md                 # Path from current state to 50 real users
 ├── tests/
 │   └── tracer-core.test.cjs   # Dependency-free Node regression tests
 └── .github/workflows/         # CI and GitHub Pages deployment
@@ -144,11 +146,12 @@ This separation prevents accidental finger drawing on tablets while keeping pen 
 
 `manifest.webmanifest` defines install metadata and icons.
 
-`sw.js` precaches the app shell:
+`sw.js` precaches the app shell and the in-app linked guide:
 
 - `/`
 - `index.html`
 - manifest
+- `docs/user-guide.md`
 - service worker icons
 
 Fetch handling is cache-first for cached app-shell files, network-first for other same-origin GET requests, and falls back to the cached app shell for navigation requests when offline.
@@ -161,6 +164,7 @@ Fetch handling is cache-first for cached app-shell files, network-first for othe
 - runs it inside a Node `vm` sandbox with mocked DOM/canvas primitives
 - verifies PWA wiring
 - verifies mobile CSS expectations
+- verifies that user-facing docs, roadmap, and app guide links are present and internally linked
 - verifies JSON save/load behavior
 - verifies stabilizer migration behavior
 - checks sanitization against SVG/JSON injection cases

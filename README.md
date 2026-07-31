@@ -1,77 +1,72 @@
 # Tracer
 
-A pen-first tracing surface for stylus-enabled devices. Load a reference image, drop its opacity, and trace over it with pressure-sensitive ink — all in a single self-contained HTML file with no build step and no dependencies.
+A pen-first tracing surface for stylus-enabled devices. Load a reference image, lower its opacity, trace over it with pressure-sensitive ink, then save JSON or export SVG.
+
+Tracer is deliberately small: one static web app, no server, no account, no cloud storage, no build step.
 
 ![Tracer screenshot](docs/screenshot.png)
 
----
+## Live app
+
+- GitHub Pages: <https://utrost.github.io/Tracer/>
+- simiono: <https://simiono.com/tracer/>
+
+## Documentation
+
+- [User guide](docs/user-guide.md) — practical first session, controls, saving, SVG export, tablet workflow, and troubleshooting.
+- [User handbook](docs/user-handbook.md) — fuller reference for browser/device behavior and file formats.
+- [Architecture](docs/architecture.md) — state model, rendering pipeline, persistence, PWA behavior, and trade-offs.
+- [Roadmap](ROADMAP.md) — current state through the target of 50 real users.
 
 ## Features
 
-- **Pressure-sensitive ink** — pen pressure is captured per point and rendered as variable line width, so strokes naturally taper and swell.
-- **Pen stabilizer** — an EMA (exponential moving average) smooths hand jitter in real time. Non-destructive: raw points are always preserved.
-- **Catmull-Rom curves** — optional spline interpolation for flowing, organic strokes. Also non-destructive.
-- **Multiple layers** — each layer has its own colour, visibility toggle, and opacity slider. Drag the grip handle to restack layers. Rename layers by double-clicking.
-- **Undo / redo** — full stroke-level history across all layers (`Ctrl/Cmd+Z` / `Ctrl/Cmd+Shift+Z`).
-- **Portable JSON projects** — save as `.json` (lossless: artboard size, all layers, raw `{x, y, pressure, t}` points, and drawing-processing settings). Optionally embeds the reference image as a data URL. View state and UI-only preferences reset when reopened.
-- **SVG export** — export processed paths per layer as `<g>` groups, with pressure baked into variable-width outlines.
-- **Folder connect** — connect a local folder via the File System Access API (Chromium) to write files straight into it instead of downloading.
-- **Zero setup** — single HTML file, works entirely offline, opens directly from disk.
-
----
+- **Pressure-sensitive ink** — pointer pressure is captured per point and rendered as variable-width strokes.
+- **Pen stabilizer** — exponential moving average smoothing reduces hand jitter without changing raw saved points.
+- **Optional curve smoothing** — Catmull-Rom interpolation can make traced lines more flowing.
+- **Layers** — colour, visibility, opacity, rename, reorder, and delete controls.
+- **Undo / redo** — stroke-level undo and redo across layers.
+- **Portable JSON projects** — lossless save format with artboard, layers, raw points, settings, and optional embedded reference image.
+- **SVG export** — visible layers export as SVG groups for the plotter/vector toolchain.
+- **Folder connect** — Chromium browsers can save directly into a chosen local folder.
+- **Offline/PWA support** — manifest, service worker, install icons, and app shell caching.
+- **In-app guide** — a compact guide panel is available from the toolbar, with a link to the full user guide.
 
 ## Getting started
 
-### Option A — open locally
+### Option A — live app
 
-Download [`index.html`](index.html) and open it in your browser. No server required.
+Open one of the live URLs above. This is the best path for testing PWA installation and offline behavior.
 
-```
+### Option B — open locally
+
+Download or clone the repo, then open `index.html` directly:
+
+```sh
 # clone the repo, then:
 open index.html          # macOS
 start index.html         # Windows
 xdg-open index.html      # Linux
 ```
 
-### Option B — GitHub Pages
+### Option C — local server
 
-When the repository is public and GitHub Pages is enabled, the live version is deployed automatically on every push to `main`:
-
-**https://utrost.github.io/Tracer/**
-
-While the repository is private, open `index.html` locally or serve the checkout from `localhost` for PWA/service-worker testing.
-
-### Documentation
-
-- [User handbook](docs/user-handbook.md) — first tracing session, layers, saving, SVG export, PWA install, and troubleshooting.
-- [Architecture](docs/architecture.md) — state model, rendering pipeline, persistence, PWA behavior, and current trade-offs.
-
-### Regression checks
-
-The distributable remains the single `index.html` file. The dependency-free
-core regression checks can be run with:
+A local server is useful for service-worker and PWA testing:
 
 ```sh
-npm test
+npm run serve
+# then open http://localhost:8000/
 ```
 
-or directly with:
+## Basic workflow
 
-```sh
-node tests/tracer-core.test.cjs
-```
+1. Click **Image** and choose a reference image.
+2. Reduce **Image** opacity until your own strokes are easy to see.
+3. Draw with a stylus or mouse.
+4. Use layers to separate passes or colours.
+5. Save **JSON** if you want to reopen the project.
+6. Export **SVG** for vector or plotter handoff.
 
----
-
-## Usage
-
-1. **Load a reference image** — click **Image** or drag and drop an image file onto the canvas.
-2. **Adjust opacity** — use the **Image** slider to fade the reference so your tracing layer stands out.
-3. **Draw** — use a stylus (or mouse) to trace. The pen tool is always active.
-4. **Add layers** — click **+** in the Layers panel to separate elements (e.g. pencil underdrawing, ink, shadow).
-5. **Save** — click **JSON** to save a lossless project, or **SVG** to export the finished artwork.
-
----
+JSON is the working format. SVG is the output format. The reference image is not included in SVG exports.
 
 ## Controls
 
@@ -90,75 +85,88 @@ node tests/tracer-core.test.cjs
 |---|---|
 | `Ctrl/Cmd + Z` | Undo |
 | `Ctrl/Cmd + Shift + Z` | Redo |
+| `Escape` | Close the guide panel |
 
 ### Toolbar
 
 | Control | Description |
 |---|---|
-| **Image** | Load a reference image |
-| **Open** | Open a saved `.json` project |
-| **Image opacity** | Fade the reference (0–100%) |
-| **Colour picker** | Set the active layer's colour |
-| **Width** | Base stroke width in artboard units |
-| **Stabilizer** | EMA smoothing strength (0 = off, 100 = maximum) |
-| **Smooth** | Toggle Catmull-Rom curve interpolation |
-| **Pressure** | Toggle pressure-to-width rendering |
-| **Undo / Redo** | Step through stroke history |
-| **Fit** | Fit the artboard into the viewport |
-| **Clear** | Clear all strokes on the active layer |
-| **Embed** | Embed the reference image inside the JSON on save |
-| **Folder** | Connect a local folder for direct file writes (Chromium only) |
-| **JSON** | Save a lossless project file |
-| **SVG** | Export processed artwork |
-
----
+| **Guide** | Opens the compact in-app guide and links to the full guide. |
+| **Image** | Load a reference image. |
+| **Open** | Open a saved `.json` Tracer project. |
+| **Image opacity** | Fade the reference image. |
+| **Colour** | Set the active layer colour. |
+| **Width** | Base stroke width before pressure scaling. |
+| **Stabilizer** | Smooth hand jitter. |
+| **Smooth** | Toggle curve interpolation. |
+| **Pressure** | Toggle pressure-to-width rendering. |
+| **Undo / Redo** | Step through stroke history. |
+| **Fit** | Fit the artboard into the viewport. |
+| **Clear** | Clear the active layer. |
+| **Embed** | Embed the reference image inside JSON saves. |
+| **Folder** | Connect a local save folder in Chromium browsers. |
+| **JSON** | Save a lossless project. |
+| **SVG** | Export visible layers. |
 
 ## File formats
 
-### JSON (`.json`)
+### JSON
 
-Lossless project format. Stores artboard dimensions, all layer metadata, and raw `{x, y, p, t}` points for every stroke. With **Embed** checked, the reference image is saved as a data URL inside the file — making the project fully portable and self-contained.
+JSON is lossless and re-openable. It stores artboard size, optional embedded reference image, settings, layer metadata, and every raw stroke point as `{x, y, p, t}`.
 
-```jsonc
-{
-  "type": "vhs-trace",
-  "version": 3,
-  "artboard": { "width": 2480, "height": 3508 },
-  "image": { "name": "reference.png", "data": "data:image/png;base64,…" },
-  "layers": [
-    {
-      "name": "Ink",
-      "color": "#111111",
-      "visible": true,
-      "opacity": 1,
-      "strokes": [
-        { "color": "#111111", "width": 4,
-          "points": [{ "x": 120.5, "y": 340.2, "p": 0.72, "t": 1718000000000 }] }
-      ]
-    }
-  ]
-}
-```
+### SVG
 
-### SVG (`.svg`)
-
-Each visible layer is exported as a `<g data-layer="…">` group. When **Pressure** is on, strokes are rendered as filled outline polygons with pressure baked in. When off, strokes are `<path>` elements with a fixed `stroke-width`.
-
----
+SVG contains visible drawing layers only. With **Pressure** enabled, strokes are exported as filled outline polygons. With **Pressure** disabled, strokes export as fixed-width paths.
 
 ## Browser compatibility
 
-| Browser | Draw | Pressure | Folder connect |
-|---|---|---|---|
-| Chrome / Edge (desktop) | ✅ | ✅ | ✅ |
-| Chrome (Android) | ✅ | ✅ | ✅ |
-| Safari (iPad + Apple Pencil) | ✅ | ✅ | ❌ |
-| Firefox | ✅ | ✅ | ❌ |
+| Browser | Draw | Pressure | Folder connect | PWA install |
+|---|---:|---:|---:|---:|
+| Chrome / Edge desktop | ✅ | ✅ | ✅ | ✅ |
+| Chrome Android | ✅ | ✅ | ✅ | ✅ |
+| Safari iPad | ✅ | ✅ | ❌ | ✅ via Add to Home Screen |
+| Firefox | ✅ | ✅ | ❌ | limited |
 
-> **Folder connect** requires the [File System Access API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_Access_API), currently supported in Chromium-based browsers only. On unsupported browsers the button is hidden and files download normally.
+Pressure support depends on browser, operating system, and stylus hardware. If pressure is flat, Tracer still works as a fixed-width tracing tool.
 
----
+## Development
 
-## Relationship to VHS
+Run the dependency-free regression suite:
 
-Tracer started as `TracerUI` inside the [VHS](https://github.com/utrost/VHS) (Vector Handwriting System) repository and was migrated here to give it a dedicated home. It shares stabilisation mechanics (EMA stabilizer, Catmull-Rom curves) with the GlyphCollector in VHS but is an independent application.
+```sh
+npm test
+```
+
+Serve locally:
+
+```sh
+npm run serve
+```
+
+The test suite checks:
+
+- PWA manifest/service-worker/deploy artifact contract
+- documentation links and roadmap/user-guide presence
+- JSON save/reopen stability
+- JSON sanitization and SVG escaping
+- pointer handling regression coverage
+
+## Deploy notes
+
+GitHub Pages deploys automatically from `main` through `.github/workflows/deploy-pages.yml`.
+
+The deploy artifact must include:
+
+- `index.html`
+- `manifest.webmanifest`
+- `sw.js`
+- `icons/`
+- `docs/`
+
+`simiono.com/tracer/` is a separate FTPS deploy target and must be updated after GitHub merge when the public app should match the repo.
+
+## Project direction
+
+Tracer is not a raster vectorizer, drawing suite, brush engine, or cloud product. It is a local-first manual tracing tool for pen/stylus work and plotter-friendly SVG handoff.
+
+The next work is documented in [Roadmap](ROADMAP.md): make the first session reliable, gather feedback from real devices, improve tablet workflow from observed issues, and support 50 real users without one-off explanation.
