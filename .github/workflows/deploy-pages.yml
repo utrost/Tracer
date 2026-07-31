@@ -32,6 +32,7 @@ jobs:
           cp -R icons _site/
           cp -R docs _site/
           cp ROADMAP.md _site/
+          test -f _site/docs/samples/reference-grid.svg
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

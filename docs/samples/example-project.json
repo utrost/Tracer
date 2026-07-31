@@ -1,0 +1,29 @@
+{
+  "type": "vhs-trace",
+  "version": 3,
+  "artboard": { "width": 1000, "height": 700 },
+  "image": { "name": "reference-grid.svg", "data": null },
+  "settings": { "stabilizer": 0.35, "smooth": true, "variable_width": true },
+  "layers": [
+    {
+      "name": "Ink",
+      "color": "#111111",
+      "visible": true,
+      "opacity": 1,
+      "strokes": [
+        {
+          "color": "#111111",
+          "width": 5,
+          "points": [
+            { "x": 150, "y": 520, "p": 0.45, "t": 0 },
+            { "x": 260, "y": 360, "p": 0.65, "t": 20 },
+            { "x": 420, "y": 640, "p": 0.55, "t": 40 },
+            { "x": 560, "y": 420, "p": 0.75, "t": 60 },
+            { "x": 720, "y": 280, "p": 0.5, "t": 80 },
+            { "x": 850, "y": 420, "p": 0.35, "t": 100 }
+          ]
+        }
+      ]
+    }
+  ]
+}

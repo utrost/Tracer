@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" role="img" aria-labelledby="title desc">
+  <title id="title">Tracer sample reference grid</title>
+  <desc id="desc">A pale grid with simple geometric guide shapes for a first tracing session.</desc>
+  <rect width="1000" height="700" fill="#ffffff"/>
+  <g stroke="#d1d5db" stroke-width="1">
+    <path d="M100 0V700M200 0V700M300 0V700M400 0V700M500 0V700M600 0V700M700 0V700M800 0V700M900 0V700"/>
+    <path d="M0 100H1000M0 200H1000M0 300H1000M0 400H1000M0 500H1000M0 600H1000"/>
+  </g>
+  <g fill="none" stroke="#9ca3af" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.75">
+    <path d="M150 520 C 260 360, 420 640, 560 420 S 770 260, 850 420"/>
+    <circle cx="300" cy="240" r="110"/>
+    <path d="M620 180 L800 240 L720 360 L560 330 Z"/>
+  </g>
+  <g fill="#6b7280" font-family="system-ui, sans-serif" font-size="28">
+    <text x="80" y="70">Tracer sample reference</text>
+    <text x="80" y="640" font-size="20">Trace the circle, polygon, or curve. Then Save JSON and Export SVG.</text>
+  </g>
+</svg>

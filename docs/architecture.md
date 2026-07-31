@@ -19,7 +19,15 @@ Tracer is a static, dependency-free web application for pressure-sensitive image
 ├── sw.js                      # Service worker for offline app-shell caching
 ├── icons/                     # PWA install icons
 ├── docs/
+│   ├── first-session.md
+│   ├── feedback-template.md
+│   ├── svg-handoff.md
 │   ├── screenshot.png
+│   ├── samples/
+│   │   ├── reference-grid.svg
+│   │   └── example-project.json
+│   ├── test-results/
+│   │   └── README.md
 │   ├── user-guide.md
 │   ├── user-handbook.md
 │   └── architecture.md
@@ -152,6 +160,8 @@ This separation prevents accidental finger drawing on tablets while keeping pen 
 - `index.html`
 - manifest
 - `docs/user-guide.md`
+- first-session and feedback docs
+- sample reference/project files
 - service worker icons
 
 Fetch handling is cache-first for cached app-shell files, network-first for other same-origin GET requests, and falls back to the cached app shell for navigation requests when offline.

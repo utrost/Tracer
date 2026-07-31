@@ -16,17 +16,19 @@ Already in place:
 - save lossless JSON projects, optionally embedding the reference image
 - export visible layers as SVG for the plotter/vector toolchain
 - direct folder save in Chromium through the File System Access API
-- offline/PWA app shell with manifest, icons, and service worker
-- regression tests for the core file format, sanitization, pointer handling, and deploy artifact contract
-- user-facing docs: README, handbook, practical guide, architecture notes, and this roadmap
+- offline/PWA app shell with manifest, icons, service worker, and cached first-session docs
+- in-app guide and diagnostics panels for onboarding and browser/stylus capability checks
+- bundled sample reference and example project for a guided first run
+- feedback template and manual real-device test log structure
+- SVG handoff documentation for pressure-outline vs fixed-width exports
+- regression tests for the core file format, sanitization, pointer handling, diagnostics, docs links, SVG export modes, and deploy artifact contract
+- user-facing docs: README, handbook, practical guide, first-session workflow, SVG handoff, architecture notes, and this roadmap
 
 Known gaps:
 
-- no built-in onboarding beyond the compact guide panel
-- no sample reference image or guided first-run project
-- no in-app diagnostics for pressure quality, browser capability, or export suitability
-- no structured feedback channel from actual users
+- no external-user session data yet
 - no import/export compatibility matrix from real plotter workflows yet
+- no real-device evidence yet for whether autosave, export naming controls, or toolbar restructuring are necessary
 
 ## Milestone 1 — reliable first session, 1 to 5 users
 

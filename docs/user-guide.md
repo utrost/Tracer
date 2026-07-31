@@ -149,4 +149,4 @@ For useful feedback, record:
 - what you tried to export to
 - the smallest step that failed or felt confusing
 
-See also: [User handbook](user-handbook.md), [Architecture](architecture.md), [Roadmap](../ROADMAP.md).
+See also: [User handbook](user-handbook.md), [Architecture](architecture.md), [Roadmap](../ROADMAP.md), [First-session workflow](first-session.md), [Feedback template](feedback-template.md), [SVG handoff](svg-handoff.md).
