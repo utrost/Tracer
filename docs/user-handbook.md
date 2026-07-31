@@ -138,7 +138,7 @@ Make sure you are opening Tracer from an HTTPS URL or `localhost`. PWA installat
 
 ### Pen pressure does not change line width
 
-Check that **Pressure** is enabled. If it is enabled and the line is still uniform, the browser/device may not expose pressure data. Tracer will still work, but strokes use fallback pressure.
+Check that **Pressure width** is enabled. If it is enabled and the line is still uniform, the browser/device may not expose pressure data. Tracer will still work, but strokes use fallback pressure.
 
 ### The Folder button is missing
 

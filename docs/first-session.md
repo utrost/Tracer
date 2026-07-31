@@ -21,7 +21,7 @@ Use the bundled sample reference if you do not have an image ready: [samples/ref
 
 - JSON reopens with the same visible strokes.
 - SVG contains the traced drawing only.
-- If pressure makes the SVG too heavy for your downstream tool, disable **Pressure** and export again as fixed-width paths.
+- If pressure makes the SVG too heavy for your downstream tool, disable **Pressure width** and export again as fixed-width paths.
 
 ## Done criteria
 
