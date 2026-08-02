@@ -332,6 +332,24 @@ assert.doesNotMatch(noPressureWidthSvg, /57\.5|42\.5/,
 assert.match(noPressureWidthSvg, /stroke-width="10"/);
 
 tracer.loadTraceJSON({
+  type: 'vhs-trace', version: 3,
+  artboard: { width: 120, height: 100 }, image: null,
+  settings: { stabilizer: 0, smooth: false, variable_width: true },
+  layers: [{ name: 'Dot', color: '#111111', visible: true, opacity: 1, strokes: [
+    { color: '#111111', width: 10, points: [{ x: 30, y: 30, p: 1, t: 1 }] }
+  ] }]
+});
+const pressureDotSvg = tracer.buildSVG();
+assert.match(pressureDotSvg, /r="7\.5"/,
+  'single-point strokes should bake pressure into circle radius when Pressure width is on');
+tracer.setVariableWidth(false);
+const fixedDotSvg = tracer.buildSVG();
+assert.match(fixedDotSvg, /r="5"/,
+  'single-point strokes should use fixed radius when Pressure width is off');
+assert.doesNotMatch(fixedDotSvg, /r="7\.5"/,
+  'single-point strokes must not bake pressure into SVG when Pressure width is off');
+
+tracer.loadTraceJSON({
   type: 'vhs-trace', version: 3, artboard: { width: 1000, height: 1400 },
   image: null, settings: { stabilizer: 0.35, smooth: true, variable_width: true },
   layers: [{ name: 'Ink', color: '#111111', visible: true, opacity: 1, strokes: [] }]

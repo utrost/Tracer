@@ -810,9 +810,11 @@ function svgStroke(st) {
   const color = safeColor(st.color);
   const width = clampNumber(st.width, 4, 0.1, 1000);
   if (pts.length === 0) return '';
-  if (pts.length === 1)
+  if (pts.length === 1) {
+    const radius = cfg.varw ? halfWidth(width, pts[0].p) : width / 2;
     return `<circle cx="${round(pts[0].x)}" cy="${round(pts[0].y)}" ` +
-           `r="${round(halfWidth(width, pts[0].p))}" fill="${color}"/>`;
+           `r="${round(radius)}" fill="${color}"/>`;
+  }
   if (cfg.varw) {
     const poly = outlinePoints(pts, width);
     const d = 'M ' + poly.map(q => `${round(q.x)} ${round(q.y)}`).join(' L ') + ' Z';

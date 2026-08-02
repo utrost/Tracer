@@ -14,7 +14,7 @@ Tracer SVG export is meant for inspection and downstream vector/plotter tools. I
 
 ### Pressure width / pressure outline mode
 
-When **Pressure width** is enabled, Tracer converts each stroke centerline into a filled pressure outline path. More pressure makes thicker lines; lighter pressure makes thinner lines. This bakes pressure into geometry and can preserve expressive tapering.
+When **Pressure width** is enabled, Tracer converts each stroke centerline into a filled pressure outline path. More pressure makes thicker lines; lighter pressure makes thinner lines. This bakes pressure into geometry and can preserve expressive tapering. Single-point marks are exported as filled circles whose radius also follows pressure.
 
 Use pressure outline mode when:
 
@@ -26,7 +26,7 @@ Caveat: pressure outlines can be heavier than simple paths and may need simplifi
 
 ### Fixed-width mode
 
-When **Pressure width** is disabled, Tracer exports each stroke as a fixed-width SVG path with `stroke-width`.
+When **Pressure width** is disabled, Tracer exports each stroke as a fixed-width SVG path with `stroke-width`. Single-point marks use a fixed circle radius derived from the Width slider; pressure is not baked into their SVG geometry.
 
 Use fixed-width mode when:
 

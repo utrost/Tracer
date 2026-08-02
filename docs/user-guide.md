@@ -44,7 +44,7 @@ Applies Catmull-Rom curve interpolation when rendering and exporting. This is al
 
 ### Pressure width
 
-This is the optional flag for pressure-sensitive thickness. When **Pressure width** is enabled, more pressure makes thicker lines and lighter pressure makes thinner lines. SVG export bakes the result into filled pressure-outline shapes. When disabled, SVG uses fixed-width paths based only on the **Width** slider.
+This is the optional flag for pressure-sensitive thickness. When **Pressure width** is enabled, more pressure makes thicker lines and lighter pressure makes thinner lines. SVG export bakes the result into filled pressure-outline shapes, including pressure-sized circles for single-point marks. When disabled, SVG uses fixed-width paths and fixed-size circles based only on the **Width** slider.
 
 If your device does not provide useful pressure, disable **Pressure width** and treat Tracer as a fixed-line tracing tool.
 
