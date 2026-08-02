@@ -16,6 +16,11 @@ concurrency:
 
 jobs:
   deploy:
+    env:
+      # actions/deploy-pages@v5 currently emits Node's internal punycode
+      # deprecation from its dependency tree. Keep the workflow log clean while
+      # staying on the latest Pages action.
+      NODE_OPTIONS: --no-deprecation
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
