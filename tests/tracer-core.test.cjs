@@ -26,9 +26,11 @@ const feedbackTemplate = readText('docs/feedback-template.md');
 const testResultsReadme = readText('docs/test-results/README.md');
 const firstSessionGuide = readText('docs/first-session.md');
 const svgHandoff = readText('docs/svg-handoff.md');
+const captureFormat = readText('docs/capture-format.md');
 
 assert.match(readme, /\[User guide\]\(docs\/user-guide\.md\)/, 'README should link the practical user guide');
 assert.match(readme, /\[Roadmap\]\(ROADMAP\.md\)/, 'README should link the roadmap');
+assert.match(readme, /\[Capture format\]\(docs\/capture-format\.md\)/, 'README should link the capture format docs');
 assert.match(html, /<button id="help"[^>]*>[^<]*Guide/, 'app should expose an in-app user guide button');
 assert.match(html, /<button id="diagnostics"[^>]*>[^<]*Diagnostics/, 'app should expose a diagnostics button');
 assert.match(html, /id="guidePanel"/, 'app should contain an in-app user guide panel');
@@ -66,6 +68,10 @@ assert.match(testResultsReadme, /Safari iPad/i, 'test-results README should incl
 assert.match(svgHandoff, /data-layer/i, 'SVG handoff docs should document layer groups');
 assert.match(svgHandoff, /fixed-width/i, 'SVG handoff docs should document fixed-width export mode');
 assert.match(svgHandoff, /pressure outline/i, 'SVG handoff docs should document pressure outline export mode');
+assert.match(captureFormat, /tracer-capture/, 'capture docs should name the capture format type');
+assert.match(captureFormat, /coordinateSystem/, 'capture docs should document coordinate system metadata');
+assert.match(captureFormat, /points.*x.*y.*p.*t/is, 'capture docs should document raw point fields');
+assert.match(captureFormat, /Gantry/i, 'capture docs should describe downstream Gantry import intent');
 assert.match(handbook, /See also: \[User guide\]\(user-guide\.md\)/, 'handbook should cross-link the user guide');
 assert.match(roadmap, /Goal: 50 real users/i, 'roadmap should explicitly target 50 real users');
 assert.match(roadmap, /Current state/i, 'roadmap should document current state');
@@ -79,7 +85,8 @@ for (const [path, text] of [
   ['docs/feedback-template.md', feedbackTemplate],
   ['docs/test-results/README.md', testResultsReadme],
   ['docs/first-session.md', firstSessionGuide],
-  ['docs/svg-handoff.md', svgHandoff]
+  ['docs/svg-handoff.md', svgHandoff],
+  ['docs/capture-format.md', captureFormat]
 ]) {
   assertMarkdownLinkTargetsExist(path, text);
 }
@@ -89,8 +96,10 @@ assert.ok(fs.existsSync(new URL('../docs/samples/reference-grid.svg', `file://${
 assert.ok(fs.existsSync(new URL('../docs/samples/example-project.json', `file://${__filename}`)),
   'sample JSON project should be bundled');
 const sampleProject = JSON.parse(readText('docs/samples/example-project.json'));
-assert.equal(sampleProject.type, 'vhs-trace');
-assert.equal(sampleProject.version, 3);
+assert.equal(sampleProject.type, 'tracer-capture');
+assert.equal(sampleProject.version, 1);
+assert.equal(sampleProject.canvas.coordinateSystem, 'top-left-y-down');
+assert.equal(sampleProject.canvas.units, 'px');
 assert.ok(sampleProject.layers.some(layer => layer.name === 'Ink' && layer.strokes.length > 0),
   'sample project should include an ink layer with a stroke');
 
@@ -127,6 +136,7 @@ assert.match(sw, /'\.\/icons\/icon-512\.png'/, 'service worker should precache t
 assert.match(sw, /'\.\/docs\/user-guide\.md'/, 'service worker should precache the in-app linked user guide');
 assert.match(sw, /'\.\/docs\/first-session\.md'/, 'service worker should precache the guided first session');
 assert.match(sw, /'\.\/docs\/feedback-template\.md'/, 'service worker should precache the feedback template');
+assert.match(sw, /'\.\/docs\/capture-format\.md'/, 'service worker should precache the capture format linked from the guide');
 assert.match(sw, /'\.\/docs\/samples\/reference-grid\.svg'/, 'service worker should precache the sample reference');
 assert.match(sw, /caches\.open\(CACHE_NAME\)/, 'service worker should populate the Cache API');
 assert.match(sw, /fetch\(event\.request\)/, 'service worker should fall back to network fetches');
@@ -233,7 +243,18 @@ const tracer = window.__tracer;
 assert.ok(tracer, 'test interface should be available');
 
 const initial = JSON.parse(tracer.buildJSON());
-assert.equal(initial.version, 3);
+assert.equal(initial.type, 'tracer-capture');
+assert.equal(initial.version, 1);
+assert.equal(initial.source.app, 'Tracer');
+assert.equal(initial.source.appVersion, packageJson.version);
+assert.match(initial.created, /^\d{4}-\d{2}-\d{2}T/, 'capture export should include an ISO-like creation timestamp');
+assert.deepEqual(initial.canvas, {
+  width: 1000,
+  height: 1400,
+  units: 'px',
+  coordinateSystem: 'top-left-y-down'
+});
+assert.deepEqual(initial.artboard, initial.canvas, 'legacy artboard alias should mirror canvas for compatibility');
 assert.equal(initial.settings.stabilizer, 0.35);
 
 tracer.loadTraceJSON(initial);
@@ -243,7 +264,7 @@ const reopenedTwice = JSON.parse(tracer.buildJSON());
 assert.deepEqual(
   [initial.settings.stabilizer, reopenedOnce.settings.stabilizer, reopenedTwice.settings.stabilizer],
   [0.35, 0.35, 0.35],
-  'v3 stabilizer values must not drift across reopen cycles'
+  'v1 tracer-capture stabilizer values must not drift across reopen cycles'
 );
 
 tracer.loadTraceJSON({
@@ -254,6 +275,25 @@ tracer.loadTraceJSON({
 });
 assert.equal(tracer.cfg.stab, 0.35, 'v2 internal stabilizer strength should be preserved');
 assert.equal(JSON.parse(tracer.buildJSON()).settings.stabilizer, 0.4118);
+
+tracer.loadTraceJSON({
+  type: 'vhs-trace', version: 3,
+  artboard: { width: 640, height: 480 }, image: null,
+  settings: { stabilizer: 0, smooth: false, variable_width: false },
+  layers: [{ name: 'Legacy Ink', color: '#111111', visible: true, opacity: 1, strokes: [
+    { color: '#111111', width: 4, points: [{ x: 1, y: 2, p: 0.25, t: 123 }] }
+  ] }]
+});
+const migratedLegacy = JSON.parse(tracer.buildJSON());
+assert.equal(migratedLegacy.type, 'tracer-capture', 'legacy vhs-trace files should reopen and resave as tracer-capture');
+assert.equal(migratedLegacy.version, 1);
+assert.deepEqual(migratedLegacy.canvas, {
+  width: 640,
+  height: 480,
+  units: 'px',
+  coordinateSystem: 'top-left-y-down'
+});
+assert.equal(migratedLegacy.layers[0].strokes[0].points[0].p, 0.25);
 
 assert.ok(tracer.buildDiagnostics().some(item => item.id === 'pointer' && /supported/i.test(item.value)),
   'diagnostics should expose pointer support status');
@@ -277,7 +317,13 @@ tracer.loadTraceJSON({
 const sanitized = JSON.parse(tracer.buildJSON());
 const layer = sanitized.layers[0];
 const stroke = layer.strokes[0];
-assert.deepEqual(sanitized.artboard, { width: 1000, height: 1 });
+assert.deepEqual(sanitized.canvas, {
+  width: 640,
+  height: 1,
+  units: 'px',
+  coordinateSystem: 'top-left-y-down'
+});
+assert.deepEqual(sanitized.artboard, sanitized.canvas);
 assert.equal(sanitized.image, null);
 assert.equal(layer.color, '#111111');
 assert.equal(layer.opacity, 1);

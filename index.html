@@ -357,6 +357,16 @@ let layerSeq = 0;                  // monotonic counter for default names/colour
 const LAYER_PALETTE = ['#111111', '#ef4444', '#2563eb', '#16a34a',
                        '#d97706', '#7c3aed', '#db2777', '#0891b2'];
 
+// Export format identity. Keep this in sync with package.json and docs/capture-format.md.
+const APP_NAME = 'Tracer';
+const APP_VERSION = '0.1.0';
+const CAPTURE_TYPE = 'tracer-capture';
+const CAPTURE_VERSION = 1;
+const LEGACY_TRACE_TYPE = 'vhs-trace';
+const LEGACY_TRACE_VERSION = 3;
+const CAPTURE_COORDINATE_SYSTEM = 'top-left-y-down';
+const CAPTURE_UNITS = 'px';
+
 // Settings (mirrored from the toolbar)
 const STABILIZER_MAX = 0.85;
 const MAX_ARTBOARD_SIZE = 100000;
@@ -783,10 +793,30 @@ function buildImageMeta() {
   return meta;
 }
 function buildJSON() {
+  const canvas = { width: AW, height: AH, units: CAPTURE_UNITS,
+                   coordinateSystem: CAPTURE_COORDINATE_SYSTEM };
+  const points = allStrokes().flatMap(st => st.points || []);
+  const pressureValues = points.map(p => Number(p.p)).filter(Number.isFinite);
+  const pressure = pressureValues.length ? {
+    samples: pressureValues.length,
+    min: round(Math.min(...pressureValues), 3),
+    max: round(Math.max(...pressureValues), 3),
+    nonDefaultSamples: pressureValues.filter(p => Math.abs(p - 0.5) > 0.02).length
+  } : { samples: 0, min: null, max: null, nonDefaultSamples: 0 };
   return JSON.stringify({
-    type: 'vhs-trace', version: 3,
-    artboard: { width: AW, height: AH },
+    type: CAPTURE_TYPE, version: CAPTURE_VERSION,
+    created: new Date().toISOString(),
+    source: { app: APP_NAME, appVersion: APP_VERSION },
+    canvas,
+    // Legacy alias for older Tracer/Gantry experiments that looked for artboard.
+    artboard: canvas,
+    coordinateSystem: CAPTURE_COORDINATE_SYSTEM,
     image: buildImageMeta(),
+    capture: {
+      input: 'pointer-events',
+      pressure,
+      pointSchema: ['x', 'y', 'p', 't']
+    },
     settings: { stabilizer: round(cfg.stab / STABILIZER_MAX, 4), smooth: cfg.smooth,
                 variable_width: cfg.varw },
     layers: layers.map(l => ({
@@ -847,10 +877,14 @@ function buildSVG() {
 }
 
 function loadTraceJSON(obj) {
-  if (!obj || obj.type !== 'vhs-trace') { alert('Not a VHS trace file.'); return; }
-  if (obj.artboard) {
-    AW = clampNumber(obj.artboard.width, AW, 1, MAX_ARTBOARD_SIZE);
-    AH = clampNumber(obj.artboard.height, AH, 1, MAX_ARTBOARD_SIZE);
+  if (!obj || (obj.type !== LEGACY_TRACE_TYPE && obj.type !== CAPTURE_TYPE)) {
+    alert('Not a Tracer capture file.'); return;
+  }
+  const legacy = obj.type === LEGACY_TRACE_TYPE;
+  const canvas = obj.canvas || obj.artboard;
+  if (canvas) {
+    AW = clampNumber(canvas.width, AW, 1, MAX_ARTBOARD_SIZE);
+    AH = clampNumber(canvas.height, AH, 1, MAX_ARTBOARD_SIZE);
   }
   // Restore an embedded reference image, if the project carried one.
   if (obj.image && obj.image.data) {
@@ -898,7 +932,7 @@ function loadTraceJSON(obj) {
   undoStack = []; redoStack = [];
   if (obj.settings) {
     if (obj.settings.stabilizer != null) {
-      if (Number(obj.version) >= 3) setStab(obj.settings.stabilizer);
+      if (!legacy || Number(obj.version) >= LEGACY_TRACE_VERSION) setStab(obj.settings.stabilizer);
       else setStabilizerStrength(obj.settings.stabilizer); // v2 stored internal EMA strength
     }
     if (typeof obj.settings.smooth === 'boolean') { cfg.smooth = obj.settings.smooth; document.getElementById('smooth').checked = cfg.smooth; }
@@ -1017,7 +1051,7 @@ document.addEventListener('keydown', (e) => {
 });
 function baseName() { return bgName ? bgName.replace(/\.[^.]+$/, '') : 'trace'; }
 document.getElementById('saveJson').addEventListener('click', () =>
-  saveFile(baseName() + '.json', 'application/json', buildJSON()));
+  saveFile(baseName() + '.tracer.json', 'application/json', buildJSON()));
 document.getElementById('saveSvg').addEventListener('click', () =>
   saveFile(baseName() + '.svg', 'image/svg+xml', buildSVG()));
 

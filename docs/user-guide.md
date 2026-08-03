@@ -66,9 +66,10 @@ You can:
 
 ### JSON for reopening
 
-Use **JSON** as the working project format. It stores:
+Use **JSON** as the working project format. Tracer saves the current full-data format as `.tracer.json` and can still open older `.json` project files. It stores:
 
-- artboard size
+- capture type/version and creation/source metadata
+- canvas size, units, and coordinate system
 - reference image metadata
 - the embedded reference image when **Embed** is enabled
 - layers, colours, opacity, and visibility
@@ -76,6 +77,8 @@ Use **JSON** as the working project format. It stores:
 - current drawing settings
 
 Keep **Embed** on when you want one portable file. Turn it off for smaller files if you do not need the reference image inside the project.
+
+For the complete data contract, see [Capture format](capture-format.md). Gantry-style machine conversion should import this JSON rather than SVG so pressure remains available as per-point data.
 
 ### Folder connect
 

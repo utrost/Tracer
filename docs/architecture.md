@@ -19,6 +19,7 @@ Tracer is a static, dependency-free web application for pressure-sensitive image
 ├── sw.js                      # Service worker for offline app-shell caching
 ├── icons/                     # PWA install icons
 ├── docs/
+│   ├── capture-format.md
 │   ├── first-session.md
 │   ├── feedback-template.md
 │   ├── svg-handoff.md
@@ -130,17 +131,20 @@ This separation prevents accidental finger drawing on tablets while keeping pen 
 
 ## Persistence
 
-### JSON projects
+### JSON capture projects
 
-`buildJSON()` serializes a lossless project:
+`buildJSON()` serializes the lossless `tracer-capture` v1 project format:
 
-- artboard size
+- capture type/version, creation time, and source app metadata
+- canvas size, units, and coordinate system
+- artboard compatibility alias for older importers
 - optional embedded reference image
 - drawing settings
 - layers
 - raw points
+- pressure summary metadata
 
-`loadTraceJSON()` validates and normalizes loaded projects. It supports older versions and sanitizes colors, names, dimensions, pressure, timestamps, and embedded image data.
+`loadTraceJSON()` validates and normalizes loaded projects. It supports current `tracer-capture` files plus older `vhs-trace` versions and sanitizes colors, names, dimensions, pressure, timestamps, and embedded image data. The complete public contract lives in `docs/capture-format.md`.
 
 ### SVG export
 

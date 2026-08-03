@@ -96,11 +96,12 @@ Changing a layer color recolors its existing strokes. Use separate layers when y
 
 ## 7. Saving and reopening projects
 
-Click **JSON** to save a lossless project file.
+Click **JSON** to save a lossless `.tracer.json` capture file.
 
 The JSON stores:
 
-- artboard width and height
+- `tracer-capture` type/version and source metadata
+- canvas width, height, units, and coordinate system
 - reference image metadata
 - optionally the embedded reference image
 - drawing settings
@@ -109,7 +110,9 @@ The JSON stores:
 
 Keep **Embed** enabled if you want a self-contained project file that reopens with the reference image. Disable **Embed** if you want smaller JSON files and do not need the reference image included.
 
-Click **Open** to reopen a saved `.json` project.
+The full JSON contract is documented in [Capture format](capture-format.md). Downstream machine tools such as Gantry should read that capture file for pressure-aware conversion.
+
+Click **Open** to reopen a saved `.json` or `.tracer.json` project.
 
 ## 8. Exporting SVG
 

@@ -17,6 +17,7 @@ Tracer is deliberately small: one static web app, no server, no account, no clou
 - [First-session workflow](docs/first-session.md) — guided sample run using bundled sample assets.
 - [Feedback template](docs/feedback-template.md) — compact real-device feedback capture.
 - [SVG handoff](docs/svg-handoff.md) — expected export structure and plotter/vector workflow notes.
+- [Capture format](docs/capture-format.md) — lossless JSON data contract for raw pressure strokes and Gantry import.
 - [User handbook](docs/user-handbook.md) — fuller reference for browser/device behavior and file formats.
 - [Architecture](docs/architecture.md) — state model, rendering pipeline, persistence, PWA behavior, and trade-offs.
 - [Roadmap](ROADMAP.md) — current state through the target of 50 real users.
@@ -71,7 +72,7 @@ npm run serve
 5. Save **JSON** if you want to reopen the project.
 6. Export **SVG** for vector or plotter handoff.
 
-JSON is the working format. SVG is the output format. The reference image is not included in SVG exports.
+JSON is the working capture format. SVG is the output format. The reference image is not included in SVG exports.
 
 ## Controls
 
@@ -117,7 +118,7 @@ JSON is the working format. SVG is the output format. The reference image is not
 
 ### JSON
 
-JSON is lossless and re-openable. It stores artboard size, optional embedded reference image, settings, layer metadata, and every raw stroke point as `{x, y, p, t}`.
+JSON is lossless and re-openable. Tracer saves the current full-data contract as `.tracer.json` with `type: "tracer-capture"`, canvas metadata, source metadata, pressure summary, layer metadata, and every raw stroke point as `{x, y, p, t}`. It can still open older `.json` projects.
 
 ### SVG
 
