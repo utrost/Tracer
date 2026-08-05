@@ -6,6 +6,12 @@ Tracer is deliberately small: one static web app, no server, no account, no clou
 
 ![Tracer screenshot](docs/screenshot.png)
 
+Real mobile tracing session:
+
+![Android portrait tracing in Tracer](docs/test-results/2026-08-05-portrait-trace-android.jpg)
+
+Notes: [Android portrait tracing screenshot — 2026-08-05](docs/test-results/2026-08-05-portrait-trace-android.md).
+
 ## Live app
 
 - GitHub Pages: <https://utrost.github.io/Tracer/>
